@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://dhrwri3fbr1ne"]
+
+[ext_resource type="PackedScene" uid="uid://jwvl5bvv2r8t" path="res://assets/models/props/target_dummy_model/target_dummy.glb" id="1_ntyah"]
+[ext_resource type="PackedScene" uid="uid://cdesbfvphapxc" path="res://scenes/health_component/health_component.tscn" id="2_abq62"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_abq62"]
+radius = 0.5727539
+height = 2.4116821
+
+[node name="target_dummy" unique_id=255964519 groups=["damageable", "observable"] instance=ExtResource("1_ntyah")]
+collision_layer = 161
+collision_mask = 0
+
+[node name="dummy" parent="." index="0" unique_id=1317211932]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." index="1" unique_id=28864796]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.19, 1.8194909, -0.19)
+shape = SubResource("CapsuleShape3D_abq62")
+
+[node name="HealthComponent" parent="." index="2" unique_id=556218863 instance=ExtResource("2_abq62")]

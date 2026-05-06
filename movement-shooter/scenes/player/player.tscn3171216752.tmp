@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://jd01nbdlbqly"]
+
+[ext_resource type="Script" uid="uid://cwo20wagkm73a" path="res://scripts/player_script/player.gd" id="1_8afob"]
+[ext_resource type="Script" uid="uid://203hhnur0ks8" path="res://scripts/weapon_manager/weapon_manager.gd" id="2_dovo2"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_x7p2l"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8afob"]
+height = 1.0
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_x7p2l"]
+
+[node name="Player" type="CharacterBody3D" unique_id=1616826265]
+script = ExtResource("1_8afob")
+jump_velocity = 10.0
+
+[node name="StandingCollision" type="CollisionShape3D" parent="." unique_id=1057099554]
+shape = SubResource("CapsuleShape3D_x7p2l")
+
+[node name="SlidingCollision" type="CollisionShape3D" parent="." unique_id=89709848]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("CapsuleShape3D_8afob")
+
+[node name="CapsuleMesh" type="MeshInstance3D" parent="." unique_id=2124955214]
+mesh = SubResource("CapsuleMesh_x7p2l")
+
+[node name="Head" type="Node3D" parent="." unique_id=1085355734]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+
+[node name="PlayerCam" type="Camera3D" parent="Head" unique_id=1772159404]
+physics_interpolation_mode = 1
+
+[node name="InteractionRay" type="RayCast3D" parent="Head" unique_id=720075290]
+target_position = Vector3(0, 0, -2)
+
+[node name="PunchRay" type="RayCast3D" parent="Head" unique_id=288200609]
+target_position = Vector3(0, 0, -2)
+debug_shape_custom_color = Color(1, 0, 0, 1)
+
+[node name="WeaponManager" type="Node3D" parent="Head" unique_id=1436826071 node_paths=PackedStringArray("player", "punch_ray")]
+script = ExtResource("2_dovo2")
+player = NodePath("../..")
+punch_ray = NodePath("../PunchRay")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=470111514]
+
+[node name="DebugLabel" type="Label" parent="CanvasLayer" unique_id=100562699]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="MovementChecks" type="Node3D" parent="." unique_id=398939044]
+
+[node name="StandCheck" type="RayCast3D" parent="MovementChecks" unique_id=527278223]
+target_position = Vector3(0, 1, 0)
+debug_shape_custom_color = Color(1, 0, 0, 1)
+
+[node name="WallCheckForward" type="RayCast3D" parent="MovementChecks" unique_id=1016032849]
+target_position = Vector3(0, 0, -0.8)
+debug_shape_custom_color = Color(1, 0.9666667, 0, 1)
+
+[node name="WallCheckLeft" type="RayCast3D" parent="MovementChecks" unique_id=1250834523]
+target_position = Vector3(-0.8, 0, 0)
+debug_shape_custom_color = Color(1, 0.9666667, 0, 1)
+
+[node name="WallCheckBack" type="RayCast3D" parent="MovementChecks" unique_id=1817457320]
+target_position = Vector3(0, 0, 0.8)
+debug_shape_custom_color = Color(1, 0.9666667, 0, 1)
+
+[node name="WallCheckRight" type="RayCast3D" parent="MovementChecks" unique_id=1763383803]
+target_position = Vector3(0.8, 0, 0)
+debug_shape_custom_color = Color(1, 0.9666667, 0, 1)

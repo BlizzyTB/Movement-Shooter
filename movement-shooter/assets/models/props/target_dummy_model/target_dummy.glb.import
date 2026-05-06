@@ -4,16 +4,16 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://jwvl5bvv2r8t"
-path="res://.godot/imported/target_dummy.glb-066b7bc46dfc6b786dfd9578d20487a1.scn"
+path="res://.godot/imported/target_dummy.glb-eedce5b1175c2417a036573e544e6d4c.scn"
 
 [deps]
 
-source_file="res://assets/models/props/target_dummy.glb"
-dest_files=["res://.godot/imported/target_dummy.glb-066b7bc46dfc6b786dfd9578d20487a1.scn"]
+source_file="res://assets/models/props/target_dummy_model/target_dummy.glb"
+dest_files=["res://.godot/imported/target_dummy.glb-eedce5b1175c2417a036573e544e6d4c.scn"]
 
 [params]
 
-nodes/root_type=""
+nodes/root_type="StaticBody3D"
 nodes/root_name=""
 nodes/root_script=null
 nodes/apply_root_scale=true

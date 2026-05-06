@@ -33,7 +33,7 @@ enum MovementState {
 
 ## How quickly horizontal movement changes while airborne.
 ## Lower values feel floatier. Higher values feel snappier.
-@export var air_lerp_speed: float = 2.0
+@export var air_lerp_speed: float = 2.5
 
 ## Downward force applied while airborne.
 ## Higher values make the player fall faster and feel heavier.
@@ -69,16 +69,20 @@ enum MovementState {
 ## This preserves the wall-jump pulse before control returns.
 @export var wall_jump_lock_time: float = 0.08
 
-## Brief time after dash where wall jumps are ignored.
-## Prevents dash-wall collisions from accidentally launching the player.
-@export var dash_wall_jump_lock_time: float = 0.12
+## Maximum number of wall jumps allowed before touching the ground again.
+## Resets every time the player lands.
+@export var max_wall_jumps: int = 2
+
+## Short timing window where a wall jump is considered perfect.
+## Perfect wall jumps do not consume a wall jump charge.
+@export var perfect_wall_jump_time: float = 0.12
 
 
 @export_category("Dash")
 
-## Fixed distance covered by a dash.
-## Higher values make the dash travel farther.
-@export var dash_distance: float = 4.0
+## Speed of the dash burst.
+## Higher values make dash cover more distance.
+@export var dash_speed: float = 28.0
 
 ## How long the dash lasts in seconds.
 ## Shorter values feel sharper and more punchy.
@@ -146,6 +150,7 @@ enum MovementState {
 ## Higher values feel snappier.
 @export var camera_tilt_speed: float = 10.0
 
+var camera_pitch_offset: float = 0.0
 
 @export_category("Mouse Look")
 
@@ -168,11 +173,7 @@ var previous_ray_target: Node = null
 
 var dash_timer: float = 0.0
 var dash_cooldown_timer: float = 0.0
-var dash_recovery_timer: float = 0.0
 var dash_direction: Vector3 = Vector3.ZERO
-var dash_start_position: Vector3 = Vector3.ZERO
-var dash_target_position: Vector3 = Vector3.ZERO
-var dash_elapsed: float = 0.0
 
 var slide_timer: float = 0.0
 var slide_direction: Vector3 = Vector3.ZERO
@@ -183,6 +184,10 @@ var slide_buffer_timer: float = 0.0
 
 var wall_jump_lock_timer: float = 0.0
 var wall_normal: Vector3 = Vector3.ZERO
+var wall_jumps_remaining: int = 2
+
+var perfect_wall_jump_timer: float = 0.0
+var was_touching_wall: bool = false
 
 var bob_timer: float = 0.0
 var breathing_timer: float = 0.0
@@ -200,12 +205,14 @@ var head_start_position: Vector3
 @onready var head: Node3D = $Head
 @onready var interaction_ray: RayCast3D = $Head/InteractionRay
 @onready var player_camera: Camera3D = $Head/PlayerCam
-@onready var debug_label: Label = $CanvasLayer/DebugLabel
+@onready var weapon_manager: WeaponManager = $Head/WeaponManager
+@onready var debug_label: Label = $PlayerUI/DebugLabel
 
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	head_start_position = head.position
+	wall_jumps_remaining = max_wall_jumps
 	set_slide_collider_active(false)
 	refresh_debug_display()
 
@@ -231,12 +238,16 @@ func _input(event: InputEvent) -> void:
 
 	if Input.is_action_just_pressed("interact"):
 		handle_interact_input()
-
+	
+	if Input.is_action_just_pressed("punch"):
+		weapon_manager.try_punch()
+		
 
 func _physics_process(delta: float) -> void:
 	update_timers(delta)
 	handle_interaction_ray()
 	update_wall_detection()
+	update_perfect_wall_jump_window()
 	update_coyote_time()
 	apply_gravity(delta)
 
@@ -244,12 +255,11 @@ func _physics_process(delta: float) -> void:
 		handle_dash_input()
 		handle_slide_input()
 		handle_jump()
-		handle_movement(delta)
+		handle_movement()
 	else:
 		stop_horizontal_movement()
 
-	if movement_state != MovementState.DASHING:
-		move_and_slide()
+	move_and_slide()
 
 	if movement_state == MovementState.SLIDING and get_slide_collision_count() > 0:
 		cancel_slide()
@@ -304,11 +314,13 @@ func update_camera_juice(delta: float) -> void:
 	var target_roll := -input_dir.x * deg_to_rad(side_tilt_amount)
 	var target_pitch_offset := input_dir.y * deg_to_rad(forward_tilt_amount)
 
-	head.rotation.x = look_pitch + lerp_angle(
-		head.rotation.x - look_pitch,
+	camera_pitch_offset = lerp_angle(
+		camera_pitch_offset,
 		target_pitch_offset,
 		camera_tilt_speed * delta
 	)
+
+	head.rotation.x = look_pitch + camera_pitch_offset
 
 	head.rotation.z = lerp_angle(
 		head.rotation.z,
@@ -324,9 +336,6 @@ func update_timers(delta: float) -> void:
 	if dash_cooldown_timer > 0.0:
 		dash_cooldown_timer -= delta
 
-	if dash_recovery_timer > 0.0:
-		dash_recovery_timer -= delta
-
 	if slide_timer > 0.0:
 		slide_timer -= delta
 
@@ -339,12 +348,11 @@ func update_timers(delta: float) -> void:
 	if slide_buffer_timer > 0.0:
 		slide_buffer_timer -= delta
 
+	if perfect_wall_jump_timer > 0.0:
+		perfect_wall_jump_timer -= delta
+
 
 func update_wall_detection() -> void:
-	if movement_state == MovementState.DASHING:
-		wall_normal = Vector3.ZERO
-		return
-
 	wall_normal = Vector3.ZERO
 
 	var checks: Array[RayCast3D] = [
@@ -365,9 +373,25 @@ func update_wall_detection() -> void:
 				return
 
 
+func update_perfect_wall_jump_window() -> void:
+	var touching_wall := (
+		not is_on_floor()
+		and wall_normal != Vector3.ZERO
+		and movement_state != MovementState.DASHING
+	)
+
+	if touching_wall and not was_touching_wall:
+		perfect_wall_jump_timer = perfect_wall_jump_time
+
+	was_touching_wall = touching_wall
+
+
 func update_coyote_time() -> void:
 	if is_on_floor():
 		coyote_timer = coyote_time
+		wall_jumps_remaining = max_wall_jumps
+		perfect_wall_jump_timer = 0.0
+		was_touching_wall = false
 	else:
 		coyote_timer = max(coyote_timer - get_physics_process_delta_time(), 0.0)
 
@@ -393,13 +417,16 @@ func is_wall_sliding() -> bool:
 		and velocity.y <= 0.0
 		and movement_state != MovementState.DASHING
 		and movement_state != MovementState.SLIDING
-		and dash_recovery_timer <= 0.0
 	)
 
 
-func handle_movement(delta: float) -> void:
+func handle_movement() -> void:
+	var air_weight: float = clamp(air_lerp_speed * get_physics_process_delta_time(), 0.0, 1.0)
+
 	if movement_state == MovementState.DASHING:
-		handle_linear_dash(delta)
+		velocity.x = dash_direction.x * dash_speed
+		velocity.z = dash_direction.z * dash_speed
+		velocity.y = 0.0
 		return
 
 	if movement_state == MovementState.SLIDING:
@@ -416,25 +443,8 @@ func handle_movement(delta: float) -> void:
 		velocity.x = move_direction.x * move_speed
 		velocity.z = move_direction.z * move_speed
 	else:
-		var air_weight: float = clamp(air_lerp_speed * delta, 0.0, 1.0)
 		velocity.x = lerp(velocity.x, move_direction.x * move_speed, air_weight)
 		velocity.z = lerp(velocity.z, move_direction.z * move_speed, air_weight)
-
-
-func handle_linear_dash(delta: float) -> void:
-	dash_elapsed += delta
-
-	var dash_progress: float = clamp(dash_elapsed / dash_duration, 0.0, 1.0)
-	var next_position: Vector3 = dash_start_position.lerp(dash_target_position, dash_progress)
-
-	var motion: Vector3 = next_position - global_position
-	var collision: KinematicCollision3D = move_and_collide(motion)
-
-	velocity = Vector3.ZERO
-
-	if collision != null:
-		dash_timer = 0.0
-		dash_recovery_timer = dash_wall_jump_lock_time
 
 
 func handle_jump() -> void:
@@ -465,7 +475,7 @@ func can_wall_jump() -> bool:
 	return (
 		not is_on_floor()
 		and wall_normal != Vector3.ZERO
-		and dash_recovery_timer <= 0.0
+		and wall_jumps_remaining > 0
 		and movement_state != MovementState.DASHING
 	)
 
@@ -494,7 +504,11 @@ func perform_wall_jump() -> void:
 	velocity.z = jump_direction.z * wall_jump_horizontal_speed
 	velocity.y = wall_jump_vertical_speed
 
+	if perfect_wall_jump_timer <= 0.0:
+		wall_jumps_remaining -= 1
+
 	wall_jump_lock_timer = wall_jump_lock_time
+	perfect_wall_jump_timer = 0.0
 
 	jump_buffer_timer = 0.0
 	coyote_timer = 0.0
@@ -514,14 +528,8 @@ func handle_dash_input() -> void:
 		desired_direction = -transform.basis.z.normalized()
 
 	dash_direction = desired_direction
-	dash_start_position = global_position
-	dash_target_position = global_position + dash_direction * dash_distance
-	dash_elapsed = 0.0
-
 	dash_timer = dash_duration
 	dash_cooldown_timer = dash_cooldown
-	dash_recovery_timer = 0.0
-	wall_normal = Vector3.ZERO
 
 	if movement_state == MovementState.SLIDING:
 		cancel_slide()
@@ -586,12 +594,6 @@ func update_movement_state() -> void:
 	if dash_timer > 0.0:
 		set_movement_state(MovementState.DASHING)
 		return
-	elif movement_state == MovementState.DASHING:
-		dash_recovery_timer = max(dash_recovery_timer, dash_wall_jump_lock_time)
-
-	if movement_state == MovementState.SLIDING and not is_on_floor():
-		cancel_slide()
-		set_slide_collider_active(false)
 
 	if slide_timer > 0.0 and is_on_floor():
 		set_movement_state(MovementState.SLIDING)
@@ -662,6 +664,34 @@ func can_interact() -> bool:
 	return control_mode == ControlMode.ON_FOOT
 
 
+func handle_interaction_ray() -> void:
+	var new_target: Node = null
+
+	if interaction_ray.is_colliding():
+		var collider := interaction_ray.get_collider()
+		new_target = find_ray_target(collider)
+
+	if new_target != previous_ray_target:
+		previous_ray_target = new_target
+		ray_target = new_target
+		ray_target_changed.emit(ray_target)
+
+
+func find_ray_target(node: Node) -> Node:
+	var current := node
+
+	while current != null:
+		if current.is_in_group("interactable"):
+			return current
+
+		if current.is_in_group("observable"):
+			return current
+
+		current = current.get_parent()
+
+	return null
+
+
 func handle_interact_input() -> void:
 	if not can_interact():
 		return
@@ -672,19 +702,6 @@ func handle_interact_input() -> void:
 	if ray_target.is_in_group("interactable") and ray_target.has_method("interact"):
 		print("Interaction Started...")
 		ray_target.interact()
-
-
-func handle_interaction_ray() -> void:
-	var new_target: Node = null
-
-	if interaction_ray.is_colliding():
-		var collider := interaction_ray.get_collider()
-		new_target = find_interactable(collider)
-
-	if new_target != previous_ray_target:
-		previous_ray_target = new_target
-		ray_target = new_target
-		ray_target_changed.emit(ray_target)
 
 
 func find_interactable(node: Node) -> Node:
@@ -707,8 +724,8 @@ func refresh_debug_display() -> void:
 		"Control Mode: " + str(control_mode)
 		+ "\nMovement State: " + str(movement_state)
 		+ "\nWall Normal: " + str(wall_normal)
-		+ "\nWall Jump Lock: " + str(wall_jump_lock_timer)
-		+ "\nDash Recovery: " + str(dash_recovery_timer)
+		+ "\nWall Jumps: " + str(wall_jumps_remaining)
+		+ "\nPerfect Wall Timer: " + str(perfect_wall_jump_timer)
 		+ "\nCan Move: " + str(can_move())
 		+ "\nCan Look: " + str(can_look())
 		+ "\nCan Shoot: " + str(can_shoot())
