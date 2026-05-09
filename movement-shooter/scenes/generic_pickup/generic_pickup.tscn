@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://buw5rs03to8v"]
+
+[ext_resource type="Script" uid="uid://b63meqjqfpaaj" path="res://scripts/generic_pickup/generic_pickup.gd" id="1_moyql"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_32fo7"]
+size = Vector3(0.5, 0.5, 0.5)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_pajw5"]
+
+[node name="GenericPickup" type="RigidBody3D" unique_id=547951544 node_paths=PackedStringArray("mesh_instance", "body_collision_shape", "pickup_area", "pickup_area_shape")]
+collision_layer = 1025
+collision_mask = 7
+script = ExtResource("1_moyql")
+mesh_instance = NodePath("MeshInstance3D")
+body_collision_shape = NodePath("CollisionShape3D")
+pickup_area = NodePath("PickupArea")
+pickup_area_shape = NodePath("PickupArea/CollisionShape3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=148104625]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=724260458]
+shape = SubResource("BoxShape3D_32fo7")
+
+[node name="PickupArea" type="Area3D" parent="." unique_id=1863807242]
+collision_layer = 1040
+collision_mask = 4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PickupArea" unique_id=156975778]
+shape = SubResource("SphereShape3D_pajw5")
+debug_color = Color(0.9562817, 1.6364455e-06, 0.541335, 0.41960785)

@@ -28,6 +28,7 @@ window/vsync/vsync_mode=2
 folder_colors={
 "res://_autoload/": "yellow",
 "res://assets/": "purple",
+"res://resources/": "green",
 "res://scenes/": "red",
 "res://scripts/": "teal"
 }
@@ -104,6 +105,21 @@ interact={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":69,"key_label":0,"unicode":101,"location":0,"echo":false,"script":null)
 ]
 }
+reset_player={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":96,"key_label":0,"unicode":96,"location":0,"echo":false,"script":null)
+]
+}
+fire_weapon={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":1,"position":Vector2(156, 20),"global_position":Vector2(165, 68),"factor":1.0,"button_index":1,"canceled":false,"pressed":true,"double_click":false,"script":null)
+]
+}
+alt_fire={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":2,"position":Vector2(237, 14),"global_position":Vector2(246, 62),"factor":1.0,"button_index":2,"canceled":false,"pressed":true,"double_click":false,"script":null)
+]
+}
 
 [layer_names]
 
@@ -112,11 +128,12 @@ interact={
 3d_physics/layer_3="player"
 3d_physics/layer_4="enemy"
 3d_physics/layer_5="interactable"
-3d_physics/layer_6="observable"
-3d_physics/layer_7="hitbox"
-3d_physics/layer_8="hurtbox"
-3d_physics/layer_9="projectile"
-3d_physics/layer_10="pickup"
+3d_physics/layer_6="damageable"
+3d_physics/layer_7="observable"
+3d_physics/layer_8="hitbox"
+3d_physics/layer_9="hurtbox"
+3d_physics/layer_10="projectile"
+3d_physics/layer_11="pickup"
 
 [physics]
 

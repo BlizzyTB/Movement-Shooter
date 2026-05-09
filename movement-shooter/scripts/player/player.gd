@@ -29,7 +29,7 @@ enum MovementState {
 
 ## Upward force applied when jumping.
 ## Higher values make jumps taller.
-@export var jump_velocity: float = 6.5
+@export var jump_velocity: float = 10
 
 ## How quickly horizontal movement changes while airborne.
 ## Lower values feel floatier. Higher values feel snappier.
@@ -193,6 +193,8 @@ var bob_timer: float = 0.0
 var breathing_timer: float = 0.0
 var head_start_position: Vector3
 
+var input_enabled: bool = true
+
 @onready var standing_collision: CollisionShape3D = $StandingCollision
 @onready var sliding_collision: CollisionShape3D = $SlidingCollision
 
@@ -218,6 +220,9 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if not input_enabled:
+		return
+	
 	if event is InputEventMouseMotion:
 		handle_mouse_look(event)
 
@@ -237,13 +242,21 @@ func _input(event: InputEvent) -> void:
 		slide_buffer_timer = slide_buffer_time
 
 	if Input.is_action_just_pressed("interact"):
-		handle_interact_input()
+		try_interact()
 	
 	if Input.is_action_just_pressed("punch"):
 		weapon_manager.try_punch()
-		
+	
+	if event.is_action_pressed("fire_weapon"):
+		if weapon_manager != null:
+			weapon_manager.try_fire()
 
 func _physics_process(delta: float) -> void:
+	if not input_enabled:
+		velocity = Vector3.ZERO
+		move_and_slide()
+		return
+	
 	update_timers(delta)
 	handle_interaction_ray()
 	update_wall_detection()
@@ -692,28 +705,125 @@ func find_ray_target(node: Node) -> Node:
 	return null
 
 
-func handle_interact_input() -> void:
-	if not can_interact():
+## Attempts to interact with whatever the player's interaction ray is currently hitting.
+## Used for pickups, buttons, terminals, doors, and future interactable objects.
+func try_interact() -> void:
+	print("")
+	print("========== PLAYER TRY INTERACT ==========")
+
+	if interaction_ray == null:
+		print("Interaction failed: interaction_ray is null.")
+		print("========== END PLAYER TRY INTERACT ==========")
 		return
 
-	if ray_target == null:
+	interaction_ray.force_raycast_update()
+
+	if not interaction_ray.is_colliding():
+		print("Interaction failed: ray is not colliding.")
+		print("========== END PLAYER TRY INTERACT ==========")
 		return
 
-	if ray_target.is_in_group("interactable") and ray_target.has_method("interact"):
-		print("Interaction Started...")
-		ray_target.interact()
+	var collider := interaction_ray.get_collider()
+
+	if collider == null:
+		print("Interaction failed: collider is null.")
+		print("========== END PLAYER TRY INTERACT ==========")
+		return
+
+	print("Interaction ray hit: ", collider.name)
+	print("Collider class: ", collider.get_class())
+
+	var interactable := find_interactable(collider)
+
+	if interactable == null:
+		print("No interactable found on collider or parents.")
+		print("========== END PLAYER TRY INTERACT ==========")
+		return
+
+	print("Interactable found: ", interactable.name)
+
+	if interactable.has_method("can_interact"):
+		var can_use: bool = interactable.can_interact(self)
+		print("can_interact returned: ", can_use)
+
+		if not can_use:
+			print("Interaction blocked by can_interact.")
+			print("========== END PLAYER TRY INTERACT ==========")
+			return
+
+	if interactable.has_method("interact"):
+		print("Calling interact() on: ", interactable.name)
+		interactable.interact(self)
+	else:
+		print("Found object has no interact() method.")
+
+	print("========== END PLAYER TRY INTERACT ==========")
+	print("")
 
 
-func find_interactable(node: Node) -> Node:
-	var current := node
+## Searches from a raycast hit node upward until it finds a node with interact().
+## This matters because the ray may hit a child collider instead of the pickup root.
+##
+## start_node:
+## The node hit by the interaction ray.
+##
+## Returns:
+## The first node found that has an interact() method, or null if none is found.
+func find_interactable(start_node: Node) -> Node:
+	if start_node == null:
+		return null
+
+	if start_node.has_method("interact"):
+		return start_node
+
+	var current := start_node.get_parent()
 
 	while current != null:
-		if current.is_in_group("interactable"):
+		if current.has_method("interact"):
 			return current
 
 		current = current.get_parent()
 
 	return null
+
+func set_input_enabled(enabled: bool) -> void:
+	input_enabled = enabled
+
+	if not input_enabled:
+		velocity = Vector3.ZERO
+
+
+func receive_item(item_data: ItemData) -> void:
+	print("")
+	print("========== PLAYER RECEIVE ITEM ==========")
+
+	if item_data == null:
+		print("Received null item_data.")
+		print("========== END PLAYER RECEIVE ITEM ==========")
+		return
+
+	print("Player received item: ", item_data.item_name)
+	print("Item type: ", item_data.item_type)
+	print("Item id: ", item_data.item_id)
+
+	if item_data is WeaponItemData:
+		print("Item is WeaponItemData.")
+
+		if weapon_manager != null:
+			print("WeaponManager found: ", weapon_manager.name)
+
+			if weapon_manager.has_method("equip_weapon_from_data"):
+				print("Calling equip_weapon_from_data.")
+				weapon_manager.equip_weapon_from_data(item_data)
+			else:
+				push_warning("WeaponManager has no equip_weapon_from_data method.")
+		else:
+			push_warning("weapon_manager is null.")
+	else:
+		print("Item is not WeaponItemData.")
+
+	print("========== END PLAYER RECEIVE ITEM ==========")
+	print("")
 
 
 func refresh_debug_display() -> void:

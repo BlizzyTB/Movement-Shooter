@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="WeaponItemData" format=3 uid="uid://dl13dldyohng"]
+
+[ext_resource type="Script" uid="uid://cftfdfyg4o3dv" path="res://scripts/items/weapon_item_data.gd" id="1_xess2"]
+[ext_resource type="PackedScene" uid="uid://c2mhxnweypy1c" path="res://scenes/items/weapons/guns/blaster_c_2.tscn" id="2_84kt1"]
+[ext_resource type="Material" uid="uid://q0x8guiobgn" path="res://assets/materials/generic_blaster.tres" id="3_v4mmk"]
+[ext_resource type="ArrayMesh" uid="uid://c7j1l8kjhjfvt" path="res://resources/items/weapons/guns/blaster_c_model.tres" id="4_b6131"]
+
+[resource]
+script = ExtResource("1_xess2")
+weapon_scene = ExtResource("2_84kt1")
+viewmodel_scene = ExtResource("2_84kt1")
+item_name = "Blaster C"
+description = "Generic blaster for testing"
+item_id = &"Blaster C"
+item_type = &"weapon"
+world_mesh = ExtResource("4_b6131")
+world_material = ExtResource("3_v4mmk")
+metadata/_custom_type_script = "uid://cftfdfyg4o3dv"

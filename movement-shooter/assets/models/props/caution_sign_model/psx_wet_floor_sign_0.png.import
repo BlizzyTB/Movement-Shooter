@@ -2,17 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dr1mp34kggq40"
-path.s3tc="res://.godot/imported/colormap.png-8b05bf3c66640c2bfc6f85d98f80e22c.s3tc.ctex"
+uid="uid://i0jxv42fkn1f"
+path.s3tc="res://.godot/imported/psx_wet_floor_sign_0.png-d189b9d8f7f9e8a5da2eca25d119e613.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
+generator_parameters={
+"md5": "eecdada8903f90b35d0d2e3cba5dd399"
+}
 
 [deps]
 
-source_file="res://assets/textures/gun_textures/colormap.png"
-dest_files=["res://.godot/imported/colormap.png-8b05bf3c66640c2bfc6f85d98f80e22c.s3tc.ctex"]
+source_file="res://assets/models/props/caution_sign_model/psx_wet_floor_sign_0.png"
+dest_files=["res://.godot/imported/psx_wet_floor_sign_0.png-d189b9d8f7f9e8a5da2eca25d119e613.s3tc.ctex"]
 
 [params]
 

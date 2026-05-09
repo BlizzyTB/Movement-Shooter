@@ -17,6 +17,36 @@ height = 1.0
 platform_floor_layers = 4294967041
 platform_wall_layers = 3
 script = ExtResource("1_8afob")
+move_speed = null
+jump_velocity = null
+air_lerp_speed = null
+gravity = null
+coyote_time = null
+jump_buffer_time = null
+wall_slide_fall_speed = null
+wall_jump_horizontal_speed = null
+wall_jump_vertical_speed = null
+wall_jump_lock_time = null
+max_wall_jumps = null
+perfect_wall_jump_time = null
+dash_speed = null
+dash_duration = null
+dash_cooldown = null
+slide_speed = null
+slide_duration = null
+slide_jump_boost = null
+slide_buffer_time = null
+bob_amount = null
+bob_speed = null
+bob_reset_speed = null
+breathing_amount = null
+breathing_speed = null
+slide_camera_dip = null
+side_tilt_amount = null
+forward_tilt_amount = null
+camera_tilt_speed = null
+mouse_sensitivity = null
+max_look_angle = null
 
 [node name="PlayerUI" parent="." unique_id=1443568279 instance=ExtResource("3_gmlin")]
 
@@ -39,12 +69,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 physics_interpolation_mode = 1
 fov = 105.0
 
-[node name="ViewmodelRoot" type="Node3D" parent="Head/PlayerCam" unique_id=222080689 node_paths=PackedStringArray("animation_player", "right_hand_slot", "left_hand_slot")]
+[node name="ViewmodelRoot" type="Node3D" parent="Head/PlayerCam" unique_id=222080689 node_paths=PackedStringArray("animation_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5, 0)
 script = ExtResource("2_p47bc")
 animation_player = NodePath("Arms/AnimationPlayer")
-right_hand_slot = NodePath("RightHandSlot")
-left_hand_slot = NodePath("LeftHandSlot")
 
 [node name="Arms" parent="Head/PlayerCam/ViewmodelRoot" unique_id=629160336 instance=ExtResource("2_lvxji")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -0.3, 0)
@@ -97,14 +125,8 @@ transform = Transform3D(0.9999995, 0, -7.1054274e-15, 0, 0.9999995, 0, 7.1054274
 [node name="AnimationPlayer" parent="Head/PlayerCam/ViewmodelRoot/Arms" index="1" unique_id=1280182202]
 autoplay = &"Relax"
 
-[node name="RightHandSlot" type="Node3D" parent="Head/PlayerCam/ViewmodelRoot" unique_id=830549125]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 1.25, -0.35)
-
-[node name="LeftHandSlot" type="Node3D" parent="Head/PlayerCam/ViewmodelRoot" unique_id=1835173884]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 1.25, -0.35)
-
 [node name="InteractionRay" type="RayCast3D" parent="Head" unique_id=720075290]
-target_position = Vector3(0, 0, -2.5)
+target_position = Vector3(0, 0, -2)
 collision_mask = 1136
 hit_from_inside = true
 debug_shape_custom_color = Color(0.1333332, 1, 0, 1)

@@ -1,7 +1,10 @@
 [gd_scene format=3 uid="uid://k5vl5lrc0amg"]
 
+[ext_resource type="PackedScene" uid="uid://diejxw27vihv3" path="res://scenes/caution_sign/caution_sign.tscn" id="1_377en"]
 [ext_resource type="PackedScene" uid="uid://jd01nbdlbqly" path="res://scenes/player/player.tscn" id="1_ey88p"]
 [ext_resource type="PackedScene" uid="uid://dhrwri3fbr1ne" path="res://scenes/target_dummy/target_dummy.tscn" id="2_agihn"]
+[ext_resource type="PackedScene" uid="uid://buw5rs03to8v" path="res://scenes/generic_pickup/generic_pickup.tscn" id="4_wi7lq"]
+[ext_resource type="Resource" uid="uid://dl13dldyohng" path="res://resources/items/weapons/guns/blaster_c.tres" id="5_1lyfj"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_ey88p"]
 
@@ -194,38 +197,15 @@ mesh = SubResource("BoxMesh_ey88p")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="WorldObjects/Obstacles/Platform3" unique_id=952260598]
 shape = SubResource("ConcavePolygonShape3D_pne18")
 
+[node name="caution_sign" parent="WorldObjects/Obstacles" unique_id=1173859455 instance=ExtResource("1_377en")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5819573, 6.9825006, -14.089163)
+
 [node name="Player" parent="." unique_id=1616826265 instance=ExtResource("1_ey88p")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.054878235, 5.3084764, 10.008636)
-move_speed = null
-jump_velocity = null
-air_lerp_speed = null
-gravity = null
-coyote_time = null
-jump_buffer_time = null
-wall_slide_fall_speed = null
-wall_jump_horizontal_speed = null
-wall_jump_vertical_speed = null
-wall_jump_lock_time = null
-max_wall_jumps = null
-perfect_wall_jump_time = null
-dash_speed = null
-dash_duration = null
-dash_cooldown = null
-slide_speed = null
-slide_duration = null
-slide_jump_boost = null
-slide_buffer_time = null
-bob_amount = null
-bob_speed = null
-bob_reset_speed = null
-breathing_amount = null
-breathing_speed = null
-slide_camera_dip = null
-side_tilt_amount = null
-forward_tilt_amount = null
-camera_tilt_speed = null
-mouse_sensitivity = null
-max_look_angle = null
 
 [node name="target_dummy" parent="." unique_id=255964519 instance=ExtResource("2_agihn")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6526365, 7.16329, -14.036634)
+
+[node name="GenericPickup" parent="." unique_id=547951544 instance=ExtResource("4_wi7lq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.67715, 10.744377, -10.577623)
+item_data = ExtResource("5_1lyfj")

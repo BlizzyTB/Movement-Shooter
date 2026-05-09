@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://c2mhxnweypy1c"]
+
+[ext_resource type="ArrayMesh" uid="uid://c7j1l8kjhjfvt" path="res://resources/items/weapons/guns/blaster_c_model.tres" id="1_wkxi4"]
+
+[node name="blaster-c2" type="Node3D" unique_id=1928200101]
+
+[node name="blaster-c" type="MeshInstance3D" parent="." unique_id=1827414264]
+mesh = ExtResource("1_wkxi4")

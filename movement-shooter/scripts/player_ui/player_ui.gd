@@ -1,72 +1,86 @@
 extends CanvasLayer
 class_name PlayerUI
 
-@export var target_player: Player
+@export var interaction_label: Label
 
-@onready var crosshair_texture: TextureRect = $CenterContainer/TextureRect
-@onready var prompt_label: Label = $Control/Label
-@onready var debug_label: Label = $DebugLabel
+@export_category("Damage UI")
+@export var damage_flash: ColorRect
+@export var health_label: Label
+@export var reset_prompt: Label
+
+@export var flash_fade_speed: float = 5.0
+
+var flash_alpha: float = 0.0
 
 
 func _ready() -> void:
-	await get_tree().process_frame
+	if interaction_label != null:
+		interaction_label.text = ""
 
-	if target_player == null:
-		var parent := get_parent()
+	if damage_flash != null:
+		damage_flash.color = Color(1.0, 0.0, 0.0, 0.0)
+		damage_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-		if parent is Player:
-			target_player = parent
+	if reset_prompt != null:
+		reset_prompt.visible = false
 
-	if target_player == null:
-		push_warning("PlayerUI: No target_player assigned.")
+
+func _process(delta: float) -> void:
+	_update_damage_flash(delta)
+
+
+func set_interaction_text(text: String) -> void:
+	if interaction_label == null:
 		return
 
-	target_player.ray_target_changed.connect(on_ray_target_changed)
-
-	clear_prompt_text()
+	interaction_label.text = text
 
 
-func set_prompt_text(new_text: String) -> void:
-	prompt_label.text = new_text
-	prompt_label.visible = true
-
-
-func clear_prompt_text() -> void:
-	prompt_label.text = ""
-	prompt_label.visible = false
-
-
-func set_crosshair_texture(new_texture: Texture2D) -> void:
-	crosshair_texture.texture = new_texture
-
-
-func on_ray_target_changed(target: Node) -> void:
-	if target == null:
-		clear_prompt_text()
+func clear_interaction_text() -> void:
+	if interaction_label == null:
 		return
 
-	if target.is_in_group("interactable"):
-		var prompt_text := get_prompt_text_from_target(target)
+	interaction_label.text = ""
 
-		if prompt_text != "":
-			set_prompt_text(prompt_text)
-		else:
-			set_prompt_text("Press E to interact")
 
+func show_damage_flash(strength: float = 0.45) -> void:
+	flash_alpha = strength
+
+	if damage_flash != null:
+		damage_flash.color = Color(1.0, 0.0, 0.0, flash_alpha)
+
+
+func update_health(current_health: float, max_health: float) -> void:
+	if health_label == null:
 		return
 
-	if target.is_in_group("observable"):
-		set_prompt_text(target.name)
+	health_label.text = "HP: %d / %d" % [
+		int(current_health),
+		int(max_health)
+	]
+
+
+func show_death_prompt() -> void:
+	if reset_prompt == null:
 		return
 
-	clear_prompt_text()
+	reset_prompt.visible = true
+	reset_prompt.text = "PRESS R TO RESET"
 
 
-func get_prompt_text_from_target(target: Node) -> String:
-	if "prompt_text" in target:
-		return str(target.prompt_text)
+func hide_death_prompt() -> void:
+	if reset_prompt == null:
+		return
 
-	if target.has_method("get_prompt_text"):
-		return str(target.get_prompt_text())
+	reset_prompt.visible = false
 
-	return ""
+
+func _update_damage_flash(delta: float) -> void:
+	if damage_flash == null:
+		return
+
+	if flash_alpha <= 0.0:
+		return
+
+	flash_alpha = max(flash_alpha - flash_fade_speed * delta, 0.0)
+	damage_flash.color = Color(1.0, 0.0, 0.0, flash_alpha)

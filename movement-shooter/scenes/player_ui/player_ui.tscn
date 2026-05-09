@@ -3,12 +3,12 @@
 [ext_resource type="Script" uid="uid://bbc6n56wm6bc1" path="res://scripts/player_ui/player_ui.gd" id="1_3csb8"]
 [ext_resource type="Texture2D" uid="uid://ifoft73w6seb" path="res://assets/textures/crosshairs/dot.png" id="2_alpx7"]
 
-[node name="PlayerUI" type="CanvasLayer" unique_id=1443568279]
+[node name="PlayerUI" type="CanvasLayer" unique_id=1443568279 node_paths=PackedStringArray("interaction_label", "damage_flash", "health_label", "reset_prompt")]
 script = ExtResource("1_3csb8")
-
-[node name="DebugLabel" type="Label" parent="." unique_id=566144727]
-offset_right = 40.0
-offset_bottom = 23.0
+interaction_label = NodePath("PromptLabelControl/PromptLabel")
+damage_flash = NodePath("DamageFlash")
+health_label = NodePath("HealthLabel")
+reset_prompt = NodePath("ResetPrompt")
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=2123911956]
 anchors_preset = 15
@@ -23,7 +23,7 @@ layout_mode = 2
 texture = ExtResource("2_alpx7")
 expand_mode = 1
 
-[node name="Control" type="Control" parent="." unique_id=1291628173]
+[node name="PromptLabelControl" type="Control" parent="." unique_id=1291628173]
 layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5
@@ -37,7 +37,7 @@ offset_bottom = 66.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Label" type="Label" parent="Control" unique_id=489716813]
+[node name="PromptLabel" type="Label" parent="PromptLabelControl" unique_id=489716813]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -51,3 +51,29 @@ offset_bottom = 11.5
 grow_horizontal = 2
 grow_vertical = 2
 horizontal_alignment = 1
+
+[node name="DebugLabel" type="Label" parent="." unique_id=566144727]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="HealthLabel" type="Label" parent="." unique_id=473830427]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 23.0
+grow_horizontal = 0
+
+[node name="ResetPrompt" type="Label" parent="." unique_id=1557508399]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="DamageFlash" type="ColorRect" parent="." unique_id=196539684]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+color = Color(1, 1, 1, 0)
