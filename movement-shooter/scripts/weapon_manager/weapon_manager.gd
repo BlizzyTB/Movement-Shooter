@@ -1,20 +1,11 @@
 extends Node
 class_name WeaponManager
 
-@export_category("Punch")
-
-## Damage dealt by the player's punch.
-@export var punch_damage: float = 25.0
-
-## Force value sent through DamageInfo when punching.
-@export var punch_force: float = 8.0
-
-## Time in seconds before the player can punch again.
-@export var punch_cooldown: float = 0.35
-
+## Handles equipped weapon data, firearm cooldowns, and firearm ray damage.
+## Punch and old FPS arms logic have been removed.
+## First-person visuals are handled by PlayerHandsRoot.
 
 @export_category("Firearm")
-
 ## Damage dealt by the currently equipped firearm.
 @export var firearm_damage: float = 20.0
 
@@ -29,63 +20,23 @@ class_name WeaponManager
 
 
 @export_category("Node References")
-
-## RayCast3D used for close-range punch hit detection.
-@export var punch_ray: RayCast3D
-
 ## RayCast3D used for firearm hit detection.
 @export var fire_ray: RayCast3D
 
-## Viewmodel root responsible for hand animations and equipped visuals.
-@export var viewmodel_root: Node
+## First-person hand/equipment visual root.
+@export var player_hands_root: PlayerHandsRoot
 
 
 ## Currently equipped weapon data resource.
 var equipped_weapon_data: WeaponItemData = null
-
-## Internal timer that blocks punch spam.
-var punch_cooldown_timer: float = 0.0
 
 ## Internal timer that blocks firearm spam.
 var firearm_cooldown_timer: float = 0.0
 
 
 func _process(delta: float) -> void:
-	if punch_cooldown_timer > 0.0:
-		punch_cooldown_timer -= delta
-
 	if firearm_cooldown_timer > 0.0:
 		firearm_cooldown_timer -= delta
-
-
-## Attempts to punch if the punch cooldown is ready.
-func try_punch() -> void:
-	print("")
-	print("========== TRY PUNCH ==========")
-
-	if punch_cooldown_timer > 0.0:
-		print("Punch blocked. Cooldown remaining: ", punch_cooldown_timer)
-		print("========== END TRY PUNCH ==========")
-		return
-
-	punch_cooldown_timer = punch_cooldown
-	print("Punch accepted.")
-
-	if viewmodel_root == null:
-		push_warning("WeaponManager viewmodel_root is null.")
-	else:
-		print("Viewmodel root found: ", viewmodel_root.name)
-
-		if viewmodel_root.has_method("play_punch"):
-			print("Calling viewmodel_root.play_punch()")
-			viewmodel_root.play_punch()
-		else:
-			push_warning("Viewmodel root has no play_punch().")
-
-	perform_punch_hit()
-
-	print("========== END TRY PUNCH ==========")
-	print("")
 
 
 ## Attempts to fire the equipped firearm if cooldown is ready.
@@ -104,9 +55,10 @@ func try_fire() -> void:
 	if equipped_weapon_data == null:
 		print("Warning: firing with no equipped_weapon_data. Using default firearm stats.")
 
-	if viewmodel_root != null and viewmodel_root.has_method("play_fire"):
-		print("Calling viewmodel_root.play_fire()")
-		viewmodel_root.play_fire()
+	if player_hands_root != null:
+		player_hands_root.play_fire()
+	else:
+		push_warning("WeaponManager player_hands_root is null.")
 
 	perform_firearm_hit()
 
@@ -114,10 +66,10 @@ func try_fire() -> void:
 	print("")
 
 
-## Equips weapon data onto the player and spawns its viewmodel into the right hand.
+## Equips weapon data onto the player and spawns its viewmodel into PlayerHandsRoot/WeaponSlot.
 ##
 ## data:
-## WeaponItemData resource containing weapon stats and viewmodel scene.
+## WeaponItemData resource containing weapon stats, viewmodel scene, and procedural weapon settings.
 func equip_weapon_from_data(data: WeaponItemData) -> void:
 	print("")
 	print("========== EQUIP WEAPON FROM DATA ==========")
@@ -139,7 +91,7 @@ func equip_weapon_from_data(data: WeaponItemData) -> void:
 	print("Fire cooldown: ", firearm_cooldown)
 	print("Range: ", firearm_range)
 	print("Force: ", firearm_force)
-	print("Viewmodel root assigned: ", viewmodel_root != null)
+	print("PlayerHandsRoot assigned: ", player_hands_root != null)
 	print("Viewmodel scene assigned: ", data.viewmodel_scene != null)
 
 	if data.viewmodel_scene != null:
@@ -147,15 +99,10 @@ func equip_weapon_from_data(data: WeaponItemData) -> void:
 	else:
 		print("Viewmodel scene path: NULL")
 
-	if viewmodel_root != null:
-		print("Viewmodel root name: ", viewmodel_root.name)
-		print("Viewmodel root has equip_right_hand_scene: ", viewmodel_root.has_method("equip_right_hand_scene"))
-
-	if viewmodel_root != null and viewmodel_root.has_method("equip_right_hand_scene"):
-		print("Calling equip_right_hand_scene...")
-		viewmodel_root.equip_right_hand_scene(data.viewmodel_scene)
+	if player_hands_root != null:
+		player_hands_root.equip_weapon_scene(data.viewmodel_scene, data)
 	else:
-		push_warning("Cannot equip viewmodel. Missing viewmodel_root or equip_right_hand_scene().")
+		push_warning("Cannot equip viewmodel. Missing player_hands_root.")
 
 	print("========== END EQUIP WEAPON FROM DATA ==========")
 	print("")
@@ -202,62 +149,14 @@ func perform_firearm_hit() -> void:
 	info.force = firearm_force
 
 	print("Target health BEFORE shot: ", health.current_health, " / ", health.max_health)
-
 	health.take_damage(info)
-
 	print("Target health AFTER shot: ", health.current_health, " / ", health.max_health)
-
-
-## Performs punch raycast hit detection and applies punch damage.
-func perform_punch_hit() -> void:
-	print("---------- PERFORM PUNCH HIT ----------")
-
-	if punch_ray == null:
-		push_warning("WeaponManager punch_ray is null.")
-		return
-
-	punch_ray.force_raycast_update()
-
-	if not punch_ray.is_colliding():
-		print("Punch ray hit nothing.")
-		return
-
-	var collider := punch_ray.get_collider()
-
-	if collider == null:
-		print("Punch ray collided, but collider is null.")
-		return
-
-	print("Punch hit: ", collider.name)
-
-	var health := find_health_component(collider)
-
-	if health == null:
-		print("Punch hit object with no HealthComponent.")
-		return
-
-	var hit_normal := punch_ray.get_collision_normal()
-
-	var info := DamageInfo.new()
-	info.amount = punch_damage
-	info.source = owner
-	info.hit_position = punch_ray.get_collision_point()
-	info.hit_normal = hit_normal
-	info.direction = -hit_normal
-	info.damage_type = "punch"
-	info.force = punch_force
-
-	print("Target health BEFORE punch: ", health.current_health, " / ", health.max_health)
-
-	health.take_damage(info)
-
-	print("Target health AFTER punch: ", health.current_health, " / ", health.max_health)
 
 
 ## Searches upward from a hit node until it finds a HealthComponent.
 ##
 ## start_node:
-## Node hit by the punch/fire ray.
+## Node hit by the fire ray.
 ##
 ## Returns:
 ## HealthComponent found on the node or parents, or null.
@@ -269,6 +168,7 @@ func find_health_component(start_node: Node) -> HealthComponent:
 		return start_node
 
 	var direct_health := start_node.get_node_or_null("HealthComponent")
+
 	if direct_health != null and direct_health is HealthComponent:
 		return direct_health
 
@@ -279,6 +179,7 @@ func find_health_component(start_node: Node) -> HealthComponent:
 			return current
 
 		var health := current.get_node_or_null("HealthComponent")
+
 		if health != null and health is HealthComponent:
 			return health
 

@@ -16,7 +16,6 @@ height = 1.0
 platform_floor_layers = 4294967041
 platform_wall_layers = 3
 script = ExtResource("1_8afob")
-slide_camera_dip = 0.8
 
 [node name="PlayerUI" parent="." unique_id=1443568279 instance=ExtResource("3_gmlin")]
 
@@ -41,10 +40,10 @@ fov = 105.0
 
 [node name="PlayerHandsRoot" type="Node3D" parent="Head" unique_id=528546853 node_paths=PackedStringArray("weapon_slot", "left_hand_slot")]
 script = ExtResource("5_75vfm")
-weapon_slot = NodePath("WeaponSlot")
-left_hand_slot = NodePath("LeftHandSlot")
 weapon_position_offset = Vector3(0.25, -0.25, -0.35)
 left_hand_position_offset = Vector3(-0.25, -0.25, -0.35)
+weapon_slot = NodePath("WeaponSlot")
+left_hand_slot = NodePath("LeftHandSlot")
 
 [node name="WeaponSlot" type="Node3D" parent="Head/PlayerHandsRoot" unique_id=1288832315]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, -0.25, -0.35)
@@ -78,7 +77,7 @@ shape = SubResource("CapsuleShape3D_8afob")
 [node name="MovementChecks" type="Node3D" parent="." unique_id=398939044]
 
 [node name="StandCheck" type="RayCast3D" parent="MovementChecks" unique_id=527278223]
-target_position = Vector3(0, 1.1, 0)
+target_position = Vector3(0, 1, 0)
 collision_mask = 2
 debug_shape_custom_color = Color(1, 0, 0, 1)
 
