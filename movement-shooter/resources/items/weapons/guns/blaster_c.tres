@@ -7,8 +7,8 @@
 
 [resource]
 script = ExtResource("1_xess2")
-weapon_scene = ExtResource("2_84kt1")
 viewmodel_scene = ExtResource("2_84kt1")
+recoil_rotation_kick_degrees = Vector3(20, 1, 0)
 item_name = "Blaster C"
 description = "Generic blaster for testing"
 item_id = &"Blaster C"

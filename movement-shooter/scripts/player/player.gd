@@ -244,8 +244,6 @@ func _input(event: InputEvent) -> void:
 	if Input.is_action_just_pressed("interact"):
 		try_interact()
 	
-	if Input.is_action_just_pressed("punch"):
-		weapon_manager.try_punch()
 	
 	if event.is_action_pressed("fire_weapon"):
 		if weapon_manager != null:

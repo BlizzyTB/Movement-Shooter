@@ -1,0 +1,90 @@
+[gd_scene format=3 uid="uid://v0kphlohacb0"]
+
+[ext_resource type="PackedScene" uid="uid://cktiv0xcf2866" path="res://scenes/levels/world_environment/world_environment.tscn" id="1_744xj"]
+[ext_resource type="Texture2D" uid="uid://dhutjujafij75" path="res://assets/textures/ground/Grass_04.png" id="2_6iprg"]
+[ext_resource type="Texture2D" uid="uid://bagoi0h3tn2cn" path="res://assets/textures/ground/Grass_04_Nrm.png" id="3_u3rl5"]
+[ext_resource type="PackedScene" uid="uid://jd01nbdlbqly" path="res://scenes/player/player.tscn" id="4_u3rl5"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tdm4w"]
+albedo_texture = ExtResource("2_6iprg")
+normal_enabled = true
+normal_scale = 1.5
+normal_texture = ExtResource("3_u3rl5")
+uv1_scale = Vector3(500, 500, 500)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ogfsv"]
+size = Vector2(1500, 1500)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_tdm4w"]
+data = PackedVector3Array(750, 0, 750, -750, 0, 750, 750, 0, -750, -750, 0, 750, -750, 0, -750, 750, 0, -750)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_u3rl5"]
+data = PackedVector3Array(-1000, -225, 0.5, -1000, -225, -0.5, -1000, 225, -0.5, 1000, -225, -0.5, -1000, -225, -0.5, -1000, -225, 0.5, -1000, 225, -0.5, -1000, -225, -0.5, 1000, -225, -0.5, -1000, 225, -0.5, -1000, 225, 0.5, -1000, -225, 0.5, -1000, -225, 0.5, -1000, 225, 0.5, 1000, 225, 0.5, 1000, 225, 0.5, -1000, 225, 0.5, -1000, 225, -0.5, -1000, -225, 0.5, 1000, -225, 0.5, 1000, -225, -0.5, 1000, 225, 0.5, 1000, -225, 0.5, -1000, -225, 0.5, 1000, -225, -0.5, 1000, -225, 0.5, 1000, 225, 0.5, 1000, -225, -0.5, 1000, 225, -0.5, -1000, 225, -0.5, -1000, 225, -0.5, 1000, 225, -0.5, 1000, 225, 0.5, 1000, 225, 0.5, 1000, 225, -0.5, 1000, -225, -0.5)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_0fe7m"]
+data = PackedVector3Array(-200, -150, 377.48, -200, -150, -377.48, -200, 150, -377.48, 200, -150, -377.48, -200, -150, -377.48, -200, -150, 377.48, -200, 150, -377.48, -200, -150, -377.48, 200, -150, -377.48, -200, 150, -377.48, -200, 150, 377.48, -200, -150, 377.48, -200, -150, 377.48, -200, 150, 377.48, 200, 150, 377.48, 200, 150, 377.48, -200, 150, 377.48, -200, 150, -377.48, -200, -150, 377.48, 200, -150, 377.48, 200, -150, -377.48, 200, 150, 377.48, 200, -150, 377.48, -200, -150, 377.48, 200, -150, -377.48, 200, -150, 377.48, 200, 150, 377.48, 200, -150, -377.48, 200, 150, -377.48, -200, 150, -377.48, -200, 150, -377.48, 200, 150, -377.48, 200, 150, 377.48, 200, 150, 377.48, 200, 150, -377.48, 200, -150, -377.48)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_8m1b4"]
+data = PackedVector3Array(-25, -160.3501, 5, -25, -160.3501, -5, -25, 160.3501, -5, 25, -160.3501, -5, -25, -160.3501, -5, -25, -160.3501, 5, -25, 160.3501, -5, -25, -160.3501, -5, 25, -160.3501, -5, -25, 160.3501, -5, -25, 160.3501, 5, -25, -160.3501, 5, -25, -160.3501, 5, -25, 160.3501, 5, 25, 160.3501, 5, 25, 160.3501, 5, -25, 160.3501, 5, -25, 160.3501, -5, -25, -160.3501, 5, 25, -160.3501, 5, 25, -160.3501, -5, 25, 160.3501, 5, 25, -160.3501, 5, -25, -160.3501, 5, 25, -160.3501, -5, 25, -160.3501, 5, 25, 160.3501, 5, 25, -160.3501, -5, 25, 160.3501, -5, -25, 160.3501, -5, -25, 160.3501, -5, 25, 160.3501, -5, 25, 160.3501, 5, 25, 160.3501, 5, 25, 160.3501, -5, 25, -160.3501, -5)
+
+[node name="Level_1_Test_Blockout" type="Node" unique_id=473059901]
+
+[node name="WorldEnvironment" parent="." unique_id=969055595 instance=ExtResource("1_744xj")]
+
+[node name="WorldObjects" type="Node3D" parent="." unique_id=376493636]
+
+[node name="TempFloor" type="StaticBody3D" parent="WorldObjects" unique_id=1701693448]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WorldObjects/TempFloor" unique_id=1172575844]
+material_override = SubResource("StandardMaterial3D_tdm4w")
+mesh = SubResource("PlaneMesh_ogfsv")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WorldObjects/TempFloor" unique_id=197736268]
+shape = SubResource("ConcavePolygonShape3D_tdm4w")
+
+[node name="Environment" type="Node3D" parent="WorldObjects" unique_id=768465379]
+
+[node name="Cliff" type="Node3D" parent="WorldObjects/Environment" unique_id=548489653]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="WorldObjects/Environment/Cliff" unique_id=1557425375]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -750)
+collision_layer = 3
+collision_mask = 4
+
+[node name="CSGBox3D" type="CSGBox3D" parent="WorldObjects/Environment/Cliff/StaticBody3D" unique_id=996551659]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 225, 0)
+size = Vector3(2000, 450, 1)
+
+[node name="CSGBakedCollisionShape3D" type="CollisionShape3D" parent="WorldObjects/Environment/Cliff/StaticBody3D" unique_id=1542773828]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 225, 0)
+shape = SubResource("ConcavePolygonShape3D_u3rl5")
+
+[node name="MainBlocks" type="Node3D" parent="WorldObjects/Environment" unique_id=1756959933]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="WorldObjects/Environment/MainBlocks" unique_id=1181539667]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -302.01483)
+collision_layer = 3
+collision_mask = 4
+
+[node name="CSGBox3D" type="CSGBox3D" parent="WorldObjects/Environment/MainBlocks/StaticBody3D" unique_id=1035827760]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -431, 147.04025, -82.519775)
+size = Vector3(400, 300, 754.96)
+
+[node name="CSGBakedCollisionShape3D" type="CollisionShape3D" parent="WorldObjects/Environment/MainBlocks/StaticBody3D" unique_id=1496385830]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -431, 147.04025, -82.519775)
+shape = SubResource("ConcavePolygonShape3D_0fe7m")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="WorldObjects/Environment/MainBlocks" unique_id=383168091]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -436.7318, 366.83942, -686.54297)
+
+[node name="CSGBox3D" type="CSGBox3D" parent="WorldObjects/Environment/MainBlocks/StaticBody3D2" unique_id=818585635]
+transform = Transform3D(1, 0, 0, 0, 0.49999997, 0.86602545, 0, -0.86602545, 0.49999997, 4.8621826, -1.3429871, 73.41699)
+size = Vector3(136.53247, 320.7002, 10)
+
+[node name="CSGBakedCollisionShape3D" type="CollisionShape3D" parent="WorldObjects/Environment/MainBlocks/StaticBody3D2" unique_id=1992715938]
+transform = Transform3D(1, 0, 0, 0, 0.49999997, 0.86602545, 0, -0.86602545, 0.49999997, 0, -1.343, 73.417)
+shape = SubResource("ConcavePolygonShape3D_8m1b4")
+
+[node name="Player" parent="." unique_id=1616826265 instance=ExtResource("4_u3rl5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -235.37477, 395.58942, -652.9902)
+slide_camera_dip = 1.0

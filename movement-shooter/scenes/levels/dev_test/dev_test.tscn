@@ -1,19 +1,11 @@
 [gd_scene format=3 uid="uid://k5vl5lrc0amg"]
 
-[ext_resource type="PackedScene" uid="uid://diejxw27vihv3" path="res://scenes/caution_sign/caution_sign.tscn" id="1_377en"]
+[ext_resource type="PackedScene" uid="uid://diejxw27vihv3" path="res://scenes/world_props/caution_sign/caution_sign.tscn" id="1_377en"]
 [ext_resource type="PackedScene" uid="uid://jd01nbdlbqly" path="res://scenes/player/player.tscn" id="1_ey88p"]
-[ext_resource type="PackedScene" uid="uid://dhrwri3fbr1ne" path="res://scenes/target_dummy/target_dummy.tscn" id="2_agihn"]
+[ext_resource type="PackedScene" uid="uid://cktiv0xcf2866" path="res://scenes/levels/world_environment/world_environment.tscn" id="1_lvw6x"]
+[ext_resource type="PackedScene" uid="uid://dhrwri3fbr1ne" path="res://scenes/world_props/target_dummy/target_dummy.tscn" id="2_agihn"]
 [ext_resource type="PackedScene" uid="uid://buw5rs03to8v" path="res://scenes/generic_pickup/generic_pickup.tscn" id="4_wi7lq"]
 [ext_resource type="Resource" uid="uid://dl13dldyohng" path="res://resources/items/weapons/guns/blaster_c.tres" id="5_1lyfj"]
-
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_ey88p"]
-
-[sub_resource type="Sky" id="Sky_agihn"]
-sky_material = SubResource("ProceduralSkyMaterial_ey88p")
-
-[sub_resource type="Environment" id="Environment_377en"]
-background_mode = 2
-sky = SubResource("Sky_agihn")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_54qpq"]
 albedo_color = Color(0.20282277, 0.34716028, 0.14928418, 1)
@@ -49,8 +41,7 @@ data = PackedVector3Array(-5, 0.082499996, 5, 5, 0.082499996, 5, -5, -0.08249999
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=901454368]
-environment = SubResource("Environment_377en")
+[node name="WorldEnvironment" parent="." unique_id=969055595 instance=ExtResource("1_lvw6x")]
 
 [node name="WorldObjects" type="Node3D" parent="." unique_id=1068782448]
 
