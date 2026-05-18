@@ -1,119 +1,62 @@
 extends Node3D
 class_name PlayerHandsRoot3D
 
-## First-person hand/equipment visual root.
-## Owns weapon viewmodel placement, procedural sway, procedural bob, and procedural recoil.
-
-@export_category("Equipment Slots")
-## Slot where the current first-person weapon viewmodel is spawned.
+@export_category("Weapon Slot")
 @export var weapon_slot: Node3D
 
-## Slot for future left-hand tools, artifacts, carried objects, or hand visuals.
-@export var left_hand_slot: Node3D
-
-
 @export_category("Weapon Viewmodel Positioning")
-## Base local position offset applied to WeaponSlot.
 @export var weapon_position_offset: Vector3 = Vector3.ZERO
-
-## Base local rotation offset applied to WeaponSlot, in degrees.
 @export var weapon_rotation_offset_degrees: Vector3 = Vector3.ZERO
-
-## Base local scale applied to WeaponSlot.
 @export var weapon_scale: Vector3 = Vector3.ONE
 
-
-@export_category("Left Hand Slot Positioning")
-## Local position offset applied to LeftHandSlot.
-@export var left_hand_position_offset: Vector3 = Vector3.ZERO
-
-## Local rotation offset applied to LeftHandSlot, in degrees.
-@export var left_hand_rotation_offset_degrees: Vector3 = Vector3.ZERO
-
-## Local scale applied to LeftHandSlot.
-@export var left_hand_scale: Vector3 = Vector3.ONE
-
-
 @export_category("Default Recoil")
-## Default recoil position kick used when no weapon data is assigned.
 @export var default_recoil_position_kick: Vector3 = Vector3(0.0, 0.03, 0.12)
-
-## Default recoil rotation kick in degrees used when no weapon data is assigned.
 @export var default_recoil_rotation_kick_degrees: Vector3 = Vector3(-6.0, 1.0, 0.0)
-
-## Default recoil snappiness used when no weapon data is assigned.
 @export var default_recoil_snappiness: float = 28.0
-
-## Default recoil return speed used when no weapon data is assigned.
 @export var default_recoil_return_speed: float = 16.0
 
-
 @export_category("Default Sway")
-## Default maximum positional sway from mouse movement.
 @export var default_sway_position_amount: Vector2 = Vector2(0.025, 0.018)
-
-## Default maximum rotational sway from mouse movement, in degrees.
 @export var default_sway_rotation_amount_degrees: Vector2 = Vector2(2.0, 2.0)
-
-## Default sway follow speed.
 @export var default_sway_follow_speed: float = 14.0
-
-## Default sway return speed.
 @export var default_sway_return_speed: float = 10.0
 
-
 @export_category("Default Bob")
-## Default weapon bob position amount while moving.
 @export var default_bob_position_amount: Vector3 = Vector3(0.035, 0.035, 0.0)
-
-## Default weapon bob rotation amount in degrees while moving.
 @export var default_bob_rotation_amount_degrees: Vector3 = Vector3(1.0, 1.5, 1.0)
-
-## Default bob speed while walking.
 @export var default_bob_walk_speed: float = 8.0
-
-## Default bob speed while sprinting.
 @export var default_bob_sprint_speed: float = 12.0
 
+@export_category("Fire Visual Priority")
+@export var fire_visual_buffer_time: float = 0.45
+@export_range(0.0, 1.0) var fire_bob_suppression: float = 0.95
 
-## Current weapon viewmodel instance spawned under weapon_slot.
+@export_category("Tactical Sprint Pose")
+@export var tactical_sprint_position: Vector3 = Vector3(0.08, -0.08, -0.04)
+@export var tactical_sprint_rotation_degrees: Vector3 = Vector3(35.0, 18.0, 10.0)
+@export var tactical_sprint_enter_speed: float = 6.0
+@export var tactical_sprint_exit_speed: float = 8.0
+
+@export_category("Landing Kick")
+@export var landing_kick_min_impact_speed: float = 6.0
+@export var landing_kick_max_impact_speed: float = 22.0
+@export var landing_kick_position: Vector3 = Vector3(0.0, -0.08, 0.04)
+@export var landing_kick_rotation_degrees: Vector3 = Vector3(7.0, 0.0, 0.0)
+
 var current_weapon_instance: Node3D = null
-
-## Current left-hand item/viewmodel instance spawned under left_hand_slot.
-var current_left_hand_instance: Node3D = null
-
-## Current equipped weapon data used for per-weapon procedural tuning.
 var current_weapon_data: WeaponItemData = null
-
-## Current mouse input accumulated this frame for sway.
 var mouse_input_delta: Vector2 = Vector2.ZERO
-
-## Current target recoil position.
 var recoil_position_target: Vector3 = Vector3.ZERO
-
-## Current displayed recoil position.
 var recoil_position_current: Vector3 = Vector3.ZERO
-
-## Current target recoil rotation in degrees.
 var recoil_rotation_target_degrees: Vector3 = Vector3.ZERO
-
-## Current displayed recoil rotation in degrees.
 var recoil_rotation_current_degrees: Vector3 = Vector3.ZERO
-
-## Current displayed sway position.
 var sway_position_current: Vector3 = Vector3.ZERO
-
-## Current displayed sway rotation in degrees.
 var sway_rotation_current_degrees: Vector3 = Vector3.ZERO
-
-## Running timer for weapon bob.
 var bob_time: float = 0.0
-
-## Current movement speed used for weapon bob.
 var movement_speed: float = 0.0
-
-## True when player is sprinting, used to speed up bob.
 var is_sprinting: bool = false
+var tactical_sprint_blend: float = 0.0
+var fire_visual_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -121,10 +64,15 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if fire_visual_timer > 0.0:
+		fire_visual_timer -= delta
+
 	update_recoil(delta)
 	update_sway(delta)
 	update_bob(delta)
+	update_tactical_sprint_pose(delta)
 	apply_visual_motion(delta)
+
 	mouse_input_delta = Vector2.ZERO
 
 
@@ -133,62 +81,35 @@ func _unhandled_input(event: InputEvent) -> void:
 		mouse_input_delta += event.relative
 
 
-## Updates movement values used by weapon bob.
-##
-## new_movement_speed:
-## Horizontal movement speed from the player controller.
-##
-## new_is_sprinting:
-## True when player is sprinting.
 func set_movement_state(new_movement_speed: float, new_is_sprinting: bool) -> void:
 	movement_speed = new_movement_speed
 	is_sprinting = new_is_sprinting
 
 
-## Applies all procedural motion and base offsets to equipment slots.
-##
-## delta:
-## Frame time. Currently unused, but kept for future smoothing changes.
 func apply_visual_motion(_delta: float) -> void:
-	if weapon_slot != null:
-		var final_position := weapon_position_offset
-		final_position += recoil_position_current
-		final_position += sway_position_current
-		final_position += get_bob_position()
+	if weapon_slot == null:
+		return
 
-		var final_rotation := weapon_rotation_offset_degrees
-		final_rotation += recoil_rotation_current_degrees
-		final_rotation += sway_rotation_current_degrees
-		final_rotation += get_bob_rotation_degrees()
+	var final_position := weapon_position_offset
+	final_position += get_tactical_sprint_position() * tactical_sprint_blend
+	final_position += recoil_position_current
+	final_position += sway_position_current
+	final_position += get_bob_position()
 
-		weapon_slot.position = final_position
-		weapon_slot.rotation_degrees = final_rotation
-		weapon_slot.scale = weapon_scale
+	var final_rotation := weapon_rotation_offset_degrees
+	final_rotation += get_tactical_sprint_rotation_degrees() * tactical_sprint_blend
+	final_rotation += recoil_rotation_current_degrees
+	final_rotation += sway_rotation_current_degrees
+	final_rotation += get_bob_rotation_degrees()
 
-	if left_hand_slot != null:
-		left_hand_slot.position = left_hand_position_offset
-		left_hand_slot.rotation_degrees = left_hand_rotation_offset_degrees
-		left_hand_slot.scale = left_hand_scale
+	weapon_slot.position = final_position
+	weapon_slot.rotation_degrees = final_rotation
+	weapon_slot.scale = weapon_scale
 
 
 func update_recoil(delta: float) -> void:
-	if recoil_position_current == null:
-		recoil_position_current = Vector3.ZERO
-
-	if recoil_position_target == null:
-		recoil_position_target = Vector3.ZERO
-
-	if recoil_rotation_current_degrees == null:
-		recoil_rotation_current_degrees = Vector3.ZERO
-
-	if recoil_rotation_target_degrees == null:
-		recoil_rotation_target_degrees = Vector3.ZERO
-
-	var snappiness: float = safe_float(get_recoil_snappiness(), default_recoil_snappiness)
-	var return_speed: float = safe_float(get_recoil_return_speed(), default_recoil_return_speed)
-
-	snappiness = max(snappiness, 0.01)
-	return_speed = max(return_speed, 0.01)
+	var snappiness: float = max(get_recoil_snappiness(), 0.01)
+	var return_speed: float = max(get_recoil_return_speed(), 0.01)
 
 	recoil_position_current = recoil_position_current.lerp(
 		recoil_position_target,
@@ -210,10 +131,10 @@ func update_recoil(delta: float) -> void:
 		clamp(delta * return_speed, 0.0, 1.0)
 	)
 
+
 func update_sway(delta: float) -> void:
 	var sway_position_amount: Vector2 = get_sway_position_amount()
 	var sway_rotation_amount: Vector2 = get_sway_rotation_amount_degrees()
-
 	var sway_follow_speed: float = max(get_sway_follow_speed(), 0.01)
 	var sway_return_speed: float = max(get_sway_return_speed(), 0.01)
 
@@ -241,6 +162,7 @@ func update_sway(delta: float) -> void:
 		sway_position_current = sway_position_current.lerp(Vector3.ZERO, return_weight)
 		sway_rotation_current_degrees = sway_rotation_current_degrees.lerp(Vector3.ZERO, return_weight)
 
+
 func update_bob(delta: float) -> void:
 	if movement_speed <= 0.1:
 		bob_time = move_toward(bob_time, 0.0, delta * 6.0)
@@ -251,49 +173,80 @@ func update_bob(delta: float) -> void:
 
 	bob_time += delta * bob_speed
 
-## Returns current procedural bob position.
+
+func update_tactical_sprint_pose(delta: float) -> void:
+	var target_blend := 0.0
+
+	if is_sprinting and fire_visual_timer <= 0.0:
+		target_blend = 1.0
+
+	var blend_speed := get_tactical_sprint_enter_speed() if target_blend > tactical_sprint_blend else get_tactical_sprint_exit_speed()
+
+	tactical_sprint_blend = move_toward(
+		tactical_sprint_blend,
+		target_blend,
+		blend_speed * delta
+	)
+
+
 func get_bob_position() -> Vector3:
 	if movement_speed <= 0.1:
 		return Vector3.ZERO
 
 	var bob_amount := get_bob_position_amount()
 	var speed_factor: float = clamp(movement_speed / 8.0, 0.0, 1.5)
+	var fire_suppression_factor := get_fire_bob_factor()
 
 	return Vector3(
-		sin(bob_time) * bob_amount.x * speed_factor,
-		abs(cos(bob_time * 2.0)) * bob_amount.y * speed_factor,
-		sin(bob_time * 0.5) * bob_amount.z * speed_factor
+		sin(bob_time) * bob_amount.x * speed_factor * fire_suppression_factor,
+		abs(cos(bob_time * 2.0)) * bob_amount.y * speed_factor * fire_suppression_factor,
+		sin(bob_time * 0.5) * bob_amount.z * speed_factor * fire_suppression_factor
 	)
 
 
-## Returns current procedural bob rotation in degrees.
 func get_bob_rotation_degrees() -> Vector3:
 	if movement_speed <= 0.1:
 		return Vector3.ZERO
 
 	var bob_amount := get_bob_rotation_amount_degrees()
 	var speed_factor: float = clamp(movement_speed / 8.0, 0.0, 1.5)
+	var fire_suppression_factor := get_fire_bob_factor()
 
 	return Vector3(
-		sin(bob_time * 2.0) * bob_amount.x * speed_factor,
-		sin(bob_time) * bob_amount.y * speed_factor,
-		sin(bob_time) * bob_amount.z * speed_factor
+		sin(bob_time * 2.0) * bob_amount.x * speed_factor * fire_suppression_factor,
+		sin(bob_time) * bob_amount.y * speed_factor * fire_suppression_factor,
+		sin(bob_time) * bob_amount.z * speed_factor * fire_suppression_factor
 	)
 
 
-## Adds recoil using the currently equipped weapon's recoil settings.
+func get_fire_bob_factor() -> float:
+	if fire_visual_timer <= 0.0:
+		return 1.0
+
+	return 1.0 - fire_bob_suppression
+
+
 func apply_recoil() -> void:
 	recoil_position_target += get_recoil_position_kick()
 	recoil_rotation_target_degrees += get_recoil_rotation_kick_degrees()
 
 
-## Equips a first-person weapon scene into WeaponSlot.
-##
-## scene:
-## PackedScene used for the weapon's first-person visual model.
-##
-## weapon_data:
-## Optional WeaponItemData used for per-weapon procedural tuning.
+func apply_landing_kick(impact_speed: float) -> void:
+	if impact_speed < landing_kick_min_impact_speed:
+		return
+
+	var impact_factor := inverse_lerp(
+		landing_kick_min_impact_speed,
+		landing_kick_max_impact_speed,
+		impact_speed
+	)
+
+	impact_factor = clamp(impact_factor, 0.0, 1.0)
+
+	recoil_position_target += landing_kick_position * impact_factor
+	recoil_rotation_target_degrees += landing_kick_rotation_degrees * impact_factor
+
+
 func equip_weapon_scene(scene: PackedScene, weapon_data: WeaponItemData = null) -> void:
 	clear_weapon()
 
@@ -326,57 +279,16 @@ func equip_weapon_scene(scene: PackedScene, weapon_data: WeaponItemData = null) 
 	apply_visual_motion(0.0)
 
 
-## Equips a left-hand visual scene into LeftHandSlot.
-##
-## scene:
-## PackedScene used for future left-hand items/tools/artifacts.
-func equip_left_hand_scene(scene: PackedScene) -> void:
-	clear_left_hand()
-
-	if left_hand_slot == null:
-		push_warning("PlayerHandsRoot cannot equip left hand scene: left_hand_slot is not assigned.")
-		return
-
-	if scene == null:
-		push_warning("PlayerHandsRoot cannot equip left hand scene: scene is null.")
-		return
-
-	var instance := scene.instantiate()
-
-	if not instance is Node3D:
-		push_warning("PlayerHandsRoot left hand scene root must be Node3D.")
-		instance.queue_free()
-		return
-
-	current_left_hand_instance = instance as Node3D
-	left_hand_slot.add_child(current_left_hand_instance)
-
-	current_left_hand_instance.position = Vector3.ZERO
-	current_left_hand_instance.rotation = Vector3.ZERO
-	current_left_hand_instance.scale = Vector3.ONE
-	current_left_hand_instance.visible = true
-
-	apply_visual_motion(0.0)
-
-
-## Removes the current weapon viewmodel.
 func clear_weapon() -> void:
 	if current_weapon_instance != null:
 		current_weapon_instance.queue_free()
-		current_weapon_instance = null
 
+	current_weapon_instance = null
 	current_weapon_data = null
+
 	reset_procedural_motion()
 
 
-## Removes the current left-hand viewmodel/item.
-func clear_left_hand() -> void:
-	if current_left_hand_instance != null:
-		current_left_hand_instance.queue_free()
-		current_left_hand_instance = null
-
-
-## Resets recoil, sway, and bob back to neutral.
 func reset_procedural_motion() -> void:
 	recoil_position_target = Vector3.ZERO
 	recoil_position_current = Vector3.ZERO
@@ -385,16 +297,13 @@ func reset_procedural_motion() -> void:
 	sway_position_current = Vector3.ZERO
 	sway_rotation_current_degrees = Vector3.ZERO
 	bob_time = 0.0
+	tactical_sprint_blend = 0.0
+	fire_visual_timer = 0.0
 
 
-## Plays procedural fire visuals.
 func play_fire() -> void:
+	fire_visual_timer = fire_visual_buffer_time
 	apply_recoil()
-
-
-## Placeholder for future left-hand action visuals.
-func play_left_hand_action() -> void:
-	pass
 
 
 func get_recoil_position_kick() -> Vector3:
@@ -413,14 +322,14 @@ func get_recoil_rotation_kick_degrees() -> Vector3:
 
 func get_recoil_snappiness() -> float:
 	if current_weapon_data != null:
-		return current_weapon_data.recoil_snappiness
+		return safe_float(current_weapon_data.recoil_snappiness, default_recoil_snappiness)
 
 	return default_recoil_snappiness
 
 
 func get_recoil_return_speed() -> float:
 	if current_weapon_data != null:
-		return current_weapon_data.recoil_return_speed
+		return safe_float(current_weapon_data.recoil_return_speed, default_recoil_return_speed)
 
 	return default_recoil_return_speed
 
@@ -441,14 +350,14 @@ func get_sway_rotation_amount_degrees() -> Vector2:
 
 func get_sway_follow_speed() -> float:
 	if current_weapon_data != null:
-		return current_weapon_data.sway_follow_speed
+		return safe_float(current_weapon_data.sway_follow_speed, default_sway_follow_speed)
 
 	return default_sway_follow_speed
 
 
 func get_sway_return_speed() -> float:
 	if current_weapon_data != null:
-		return current_weapon_data.sway_return_speed
+		return safe_float(current_weapon_data.sway_return_speed, default_sway_return_speed)
 
 	return default_sway_return_speed
 
@@ -469,16 +378,45 @@ func get_bob_rotation_amount_degrees() -> Vector3:
 
 func get_bob_walk_speed() -> float:
 	if current_weapon_data != null:
-		return current_weapon_data.bob_walk_speed
+		return safe_float(current_weapon_data.bob_walk_speed, default_bob_walk_speed)
 
 	return default_bob_walk_speed
 
 
 func get_bob_sprint_speed() -> float:
 	if current_weapon_data != null:
-		return current_weapon_data.bob_sprint_speed
+		return safe_float(current_weapon_data.bob_sprint_speed, default_bob_sprint_speed)
 
 	return default_bob_sprint_speed
+
+
+func get_tactical_sprint_position() -> Vector3:
+	if current_weapon_data != null:
+		return current_weapon_data.tactical_sprint_position
+
+	return tactical_sprint_position
+
+
+func get_tactical_sprint_rotation_degrees() -> Vector3:
+	if current_weapon_data != null:
+		return current_weapon_data.tactical_sprint_rotation_degrees
+
+	return tactical_sprint_rotation_degrees
+
+
+func get_tactical_sprint_enter_speed() -> float:
+	if current_weapon_data != null:
+		return safe_float(current_weapon_data.tactical_sprint_enter_speed, tactical_sprint_enter_speed)
+
+	return tactical_sprint_enter_speed
+
+
+func get_tactical_sprint_exit_speed() -> float:
+	if current_weapon_data != null:
+		return safe_float(current_weapon_data.tactical_sprint_exit_speed, tactical_sprint_exit_speed)
+
+	return tactical_sprint_exit_speed
+
 
 func safe_float(value, fallback: float) -> float:
 	if typeof(value) == TYPE_FLOAT or typeof(value) == TYPE_INT:

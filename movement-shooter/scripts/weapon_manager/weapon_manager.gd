@@ -2,8 +2,8 @@ extends Node
 class_name WeaponManager
 
 ## Handles equipped weapon data, firearm cooldowns, and firearm ray damage.
-## Punch and old FPS arms logic have been removed.
-## First-person visuals are handled by PlayerHandsRoot.
+## Weapon data controls gameplay.
+## PlayerHandsRoot3D only controls first-person weapon visuals.
 
 @export_category("Firearm")
 ## Damage dealt by the currently equipped firearm.
@@ -18,14 +18,12 @@ class_name WeaponManager
 ## Force value sent through DamageInfo for bullet impact reactions.
 @export var firearm_force: float = 4.0
 
-
 @export_category("Node References")
 ## RayCast3D used for firearm hit detection.
 @export var fire_ray: RayCast3D
 
-## First-person hand/equipment visual root.
-@export var player_hands_root: PlayerHandsRoot
-
+## First-person procedural weapon visual root.
+@export var player_hands_root: Node
 
 ## Currently equipped weapon data resource.
 var equipped_weapon_data: WeaponItemData = null
@@ -39,10 +37,20 @@ func _process(delta: float) -> void:
 		firearm_cooldown_timer -= delta
 
 
-## Attempts to fire the equipped firearm if cooldown is ready.
+## Returns true if the player currently has gameplay weapon data equipped.
+func has_weapon_equipped() -> bool:
+	return equipped_weapon_data != null
+
+
+## Attempts to fire the equipped firearm if a weapon is equipped and cooldown is ready.
 func try_fire() -> void:
 	print("")
 	print("========== TRY FIRE ==========")
+
+	if not has_weapon_equipped():
+		print("Fire blocked: no weapon equipped.")
+		print("========== END TRY FIRE ==========")
+		return
 
 	if firearm_cooldown_timer > 0.0:
 		print("Fire blocked. Cooldown remaining: ", firearm_cooldown_timer)
@@ -50,15 +58,14 @@ func try_fire() -> void:
 		return
 
 	firearm_cooldown_timer = firearm_cooldown
-	print("Fire accepted.")
 
-	if equipped_weapon_data == null:
-		print("Warning: firing with no equipped_weapon_data. Using default firearm stats.")
+	print("Fire accepted.")
+	print("Weapon: ", equipped_weapon_data.item_name)
 
 	if player_hands_root != null:
 		player_hands_root.play_fire()
 	else:
-		push_warning("WeaponManager player_hands_root is null.")
+		push_warning("WeaponManager player_hands_root is null. Weapon can still fire, but no visual recoil will play.")
 
 	perform_firearm_hit()
 
@@ -66,10 +73,23 @@ func try_fire() -> void:
 	print("")
 
 
-## Equips weapon data onto the player and spawns its viewmodel into PlayerHandsRoot/WeaponSlot.
-##
-## data:
-## WeaponItemData resource containing weapon stats, viewmodel scene, and procedural weapon settings.
+## Updates procedural weapon bob movement values.
+func set_player_movement_state(new_movement_speed: float, new_is_sprinting: bool) -> void:
+	if player_hands_root == null:
+		return
+
+	player_hands_root.set_movement_state(new_movement_speed, new_is_sprinting)
+
+
+## Sends a landing impact speed to the procedural weapon visual root.
+func apply_landing_kick(impact_speed: float) -> void:
+	if player_hands_root == null:
+		return
+
+	player_hands_root.apply_landing_kick(impact_speed)
+
+
+## Equips weapon data onto the player and spawns its viewmodel into PlayerHandsRoot3D/WeaponSlot.
 func equip_weapon_from_data(data: WeaponItemData) -> void:
 	print("")
 	print("========== EQUIP WEAPON FROM DATA ==========")
@@ -94,17 +114,28 @@ func equip_weapon_from_data(data: WeaponItemData) -> void:
 	print("PlayerHandsRoot assigned: ", player_hands_root != null)
 	print("Viewmodel scene assigned: ", data.viewmodel_scene != null)
 
-	if data.viewmodel_scene != null:
-		print("Viewmodel scene path: ", data.viewmodel_scene.resource_path)
-	else:
-		print("Viewmodel scene path: NULL")
-
 	if player_hands_root != null:
 		player_hands_root.equip_weapon_scene(data.viewmodel_scene, data)
 	else:
 		push_warning("Cannot equip viewmodel. Missing player_hands_root.")
 
 	print("========== END EQUIP WEAPON FROM DATA ==========")
+	print("")
+
+
+## Unequips the current weapon gameplay data and clears its visual viewmodel.
+func unequip_weapon() -> void:
+	print("")
+	print("========== UNEQUIP WEAPON ==========")
+
+	equipped_weapon_data = null
+	firearm_cooldown_timer = 0.0
+
+	if player_hands_root != null:
+		player_hands_root.clear_weapon()
+
+	print("Weapon unequipped.")
+	print("========== END UNEQUIP WEAPON ==========")
 	print("")
 
 
@@ -154,12 +185,6 @@ func perform_firearm_hit() -> void:
 
 
 ## Searches upward from a hit node until it finds a HealthComponent.
-##
-## start_node:
-## Node hit by the fire ray.
-##
-## Returns:
-## HealthComponent found on the node or parents, or null.
 func find_health_component(start_node: Node) -> HealthComponent:
 	if start_node == null:
 		return null

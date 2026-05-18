@@ -16,7 +16,36 @@ height = 1.0
 platform_floor_layers = 4294967041
 platform_wall_layers = 3
 script = ExtResource("1_8afob")
+move_speed = null
+jump_velocity = null
+air_lerp_speed = null
+gravity = null
+coyote_time = null
+jump_buffer_time = null
+wall_slide_fall_speed = null
+wall_jump_horizontal_speed = null
+wall_jump_vertical_speed = null
+wall_jump_lock_time = null
+max_wall_jumps = null
+perfect_wall_jump_time = null
+dash_speed = null
+dash_duration = null
+dash_cooldown = null
+slide_speed = null
+slide_duration = null
+slide_jump_boost = null
+slide_buffer_time = null
+bob_amount = null
+bob_speed = null
+bob_reset_speed = null
+breathing_amount = null
+breathing_speed = null
 slide_camera_dip = 0.8
+side_tilt_amount = null
+forward_tilt_amount = null
+camera_tilt_speed = null
+mouse_sensitivity = null
+max_look_angle = null
 
 [node name="PlayerUI" parent="." unique_id=1443568279 instance=ExtResource("3_gmlin")]
 
