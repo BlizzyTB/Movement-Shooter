@@ -197,6 +197,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.054878235, 5.3084764, 10.0
 [node name="target_dummy" parent="." unique_id=255964519 instance=ExtResource("2_agihn")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6526365, 7.16329, -14.036634)
 
-[node name="TestBlaster" parent="." unique_id=547951544 instance=ExtResource("4_wi7lq")]
+[node name="GenericPickup" parent="." unique_id=547951544 instance=ExtResource("4_wi7lq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5411425, 5.8777037, -0.9172213)
 item_data = ExtResource("5_1lyfj")

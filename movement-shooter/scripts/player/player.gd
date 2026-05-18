@@ -5,205 +5,94 @@ signal control_mode_changed(old_mode, new_mode)
 signal movement_state_changed(old_state, new_state)
 signal ray_target_changed(new_target)
 
-enum ControlMode {
-	ON_FOOT,
-	IN_VEHICLE,
-	LOCKED,
-	MENU,
-	DEAD
-}
-
-enum MovementState {
-	GROUNDED,
-	AIRBORNE,
-	DASHING,
-	SLIDING,
-	WALL_SLIDING
-}
+enum ControlMode { ON_FOOT, IN_VEHICLE, LOCKED, MENU, DEAD }
+enum MovementState { GROUNDED, AIRBORNE, DASHING, SLIDING, WALL_SLIDING }
 
 @export_category("Movement")
-
-## Base 1:1 movement speed while on foot.
-## This is the normal combat movement speed.
 @export var move_speed: float = 12.0
-
-## Upward force applied when jumping.
-## Higher values make jumps taller.
-@export var jump_velocity: float = 10
-
-## How quickly horizontal movement changes while airborne.
-## Lower values feel floatier. Higher values feel snappier.
+@export var jump_velocity: float = 10.0
 @export var air_lerp_speed: float = 2.5
-
-## Downward force applied while airborne.
-## Higher values make the player fall faster and feel heavier.
 @export var gravity: float = 22.0
 
+@export_category("Boost Momentum")
+@export var max_boost_speed: float = 16.0
+@export var dash_boost: float = 10.0
+@export var slide_boost: float = 7.0
+@export var boost_decay: float = 18.0
 
 @export_category("Jump Feel")
-
-## Small grace window after leaving a ledge where jumping is still allowed.
-## Makes platforming feel more forgiving.
 @export var coyote_time: float = 0.12
-
-## Small window where an early jump press is remembered.
-## Makes jumps trigger even if the button was pressed slightly before landing.
 @export var jump_buffer_time: float = 0.12
 
-
 @export_category("Wall Movement")
-
-## Maximum downward speed while sliding on a wall.
-## Lower values make the player slide down more slowly.
 @export var wall_slide_fall_speed: float = 2.0
-
-## Instant horizontal pulse away from the wall during a wall jump.
-## Higher values make the wall jump pop harder.
 @export var wall_jump_horizontal_speed: float = 12.0
-
-## Upward speed applied during a wall jump.
-## Higher values make wall jumps taller.
 @export var wall_jump_vertical_speed: float = 12.0
-
-## Very short time where normal 1:1 movement is paused after wall jumping.
-## This preserves the wall-jump pulse before control returns.
 @export var wall_jump_lock_time: float = 0.08
-
-## Maximum number of wall jumps allowed before touching the ground again.
-## Resets every time the player lands.
 @export var max_wall_jumps: int = 2
-
-## Short timing window where a wall jump is considered perfect.
-## Perfect wall jumps do not consume a wall jump charge.
 @export var perfect_wall_jump_time: float = 0.12
 
-
 @export_category("Dash")
-
-## Speed of the dash burst.
-## Higher values make dash cover more distance.
 @export var dash_speed: float = 28.0
-
-## How long the dash lasts in seconds.
-## Shorter values feel sharper and more punchy.
 @export var dash_duration: float = 0.14
-
-## Time before another dash can be used.
-## Lower values allow more frequent dashing.
 @export var dash_cooldown: float = 0.35
 
-
 @export_category("Slide")
-
-## Speed of the committed slide burst.
-## Higher values make slides more aggressive.
 @export var slide_speed: float = 18.0
-
-## How long the slide lasts in seconds.
-## Lower values make slides snappier.
 @export var slide_duration: float = 0.35
-
-## Extra horizontal speed added when jumping out of a slide.
-## Gives slide-jumps a small burst of momentum.
 @export var slide_jump_boost: float = 7.0
-
-## How long an air-pressed slide input is remembered.
-## Lets the player press slide before landing and slide immediately on touchdown.
 @export var slide_buffer_time: float = 1.0
 
-
 @export_category("Camera Juice")
-
-## Vertical camera bob amount while moving.
-## Keep this subtle to avoid motion sickness.
 @export var bob_amount: float = 0.045
-
-## How fast the movement bob cycles.
-## Higher values make the bob feel quicker.
 @export var bob_speed: float = 20.0
-
-## How quickly the camera returns to its resting position.
-## Higher values snap back faster.
 @export var bob_reset_speed: float = 12.0
-
-## Tiny idle breathing motion amount.
-## Keep very low for a subtle living camera feel.
 @export var breathing_amount: float = 0.012
-
-## Speed of the breathing motion.
-## Lower values feel slower and calmer.
 @export var breathing_speed: float = 1.6
-
-## How far the camera dips while sliding.
-## Higher values make slides feel lower and faster.
 @export var slide_camera_dip: float = 0.45
-
-## Camera roll amount when strafing left or right.
-## Higher values create stronger side tilt.
 @export var side_tilt_amount: float = 3.0
-
-## Small pitch offset when moving forward or backward.
-## Higher values make movement feel more physical.
 @export var forward_tilt_amount: float = 1.2
-
-## How quickly camera tilt reacts to movement input.
-## Higher values feel snappier.
 @export var camera_tilt_speed: float = 10.0
 
 var camera_pitch_offset: float = 0.0
 
 @export_category("Mouse Look")
-
-## Mouse sensitivity for first-person camera control.
-## Higher values turn the camera faster.
 @export var mouse_sensitivity: float = 0.003
-
-## Maximum vertical look angle in degrees.
-## Prevents the camera from flipping over.
 @export var max_look_angle: float = 89.0
-
 
 var control_mode: ControlMode = ControlMode.ON_FOOT
 var movement_state: MovementState = MovementState.GROUNDED
-
 var look_pitch: float = 0.0
-
 var ray_target: Node = null
 var previous_ray_target: Node = null
-
 var dash_timer: float = 0.0
 var dash_cooldown_timer: float = 0.0
 var dash_direction: Vector3 = Vector3.ZERO
-
 var slide_timer: float = 0.0
 var slide_direction: Vector3 = Vector3.ZERO
-
+var boost_velocity: Vector3 = Vector3.ZERO
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
 var slide_buffer_timer: float = 0.0
-
 var wall_jump_lock_timer: float = 0.0
 var wall_normal: Vector3 = Vector3.ZERO
 var wall_jumps_remaining: int = 2
-
 var perfect_wall_jump_timer: float = 0.0
 var was_touching_wall: bool = false
-
 var bob_timer: float = 0.0
 var breathing_timer: float = 0.0
 var head_start_position: Vector3
-
 var input_enabled: bool = true
+var was_on_floor: bool = false
+var previous_frame_velocity_y: float = 0.0
 
 @onready var standing_collision: CollisionShape3D = $StandingCollision
 @onready var sliding_collision: CollisionShape3D = $SlidingCollision
-
 @onready var stand_check: RayCast3D = $MovementChecks/StandCheck
 @onready var wall_check_forward: RayCast3D = $MovementChecks/WallCheckForward
 @onready var wall_check_back: RayCast3D = $MovementChecks/WallCheckBack
 @onready var wall_check_left: RayCast3D = $MovementChecks/WallCheckLeft
 @onready var wall_check_right: RayCast3D = $MovementChecks/WallCheckRight
-
 @onready var head: Node3D = $Head
 @onready var interaction_ray: RayCast3D = $Head/InteractionRay
 @onready var player_camera: Camera3D = $Head/PlayerCam
@@ -215,6 +104,7 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	head_start_position = head.position
 	wall_jumps_remaining = max_wall_jumps
+	was_on_floor = is_on_floor()
 	set_slide_collider_active(false)
 	refresh_debug_display()
 
@@ -222,7 +112,7 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if not input_enabled:
 		return
-	
+
 	if event is InputEventMouseMotion:
 		handle_mouse_look(event)
 
@@ -243,18 +133,21 @@ func _input(event: InputEvent) -> void:
 
 	if Input.is_action_just_pressed("interact"):
 		try_interact()
-	
-	
+
 	if event.is_action_pressed("fire_weapon"):
-		if weapon_manager != null:
+		if can_shoot() and weapon_manager != null:
 			weapon_manager.try_fire()
+
 
 func _physics_process(delta: float) -> void:
 	if not input_enabled:
 		velocity = Vector3.ZERO
+		boost_velocity = Vector3.ZERO
 		move_and_slide()
+		was_on_floor = is_on_floor()
+		previous_frame_velocity_y = velocity.y
 		return
-	
+
 	update_timers(delta)
 	handle_interaction_ray()
 	update_wall_detection()
@@ -270,14 +163,163 @@ func _physics_process(delta: float) -> void:
 	else:
 		stop_horizontal_movement()
 
+	update_boost_velocity(delta)
+
+	previous_frame_velocity_y = velocity.y
+
 	move_and_slide()
+
+	handle_weapon_landing_kick()
 
 	if movement_state == MovementState.SLIDING and get_slide_collision_count() > 0:
 		cancel_slide()
 
 	update_movement_state()
 	update_camera_juice(delta)
+	update_weapon_visual_movement()
 	refresh_debug_display()
+
+	was_on_floor = is_on_floor()
+
+
+func handle_movement() -> void:
+	if wall_jump_lock_timer > 0.0:
+		return
+
+	var move_direction := get_input_move_direction()
+	var delta := get_physics_process_delta_time()
+	var target_velocity := move_direction * move_speed
+
+	if movement_state == MovementState.DASHING:
+		velocity.x = target_velocity.x + boost_velocity.x
+		velocity.z = target_velocity.z + boost_velocity.z
+		return
+
+	if movement_state == MovementState.SLIDING:
+		velocity.x = slide_direction.x * move_speed + boost_velocity.x
+		velocity.z = slide_direction.z * move_speed + boost_velocity.z
+		return
+
+	if is_on_floor():
+		velocity.x = target_velocity.x + boost_velocity.x
+		velocity.z = target_velocity.z + boost_velocity.z
+	else:
+		velocity.x = lerp(velocity.x, target_velocity.x + boost_velocity.x, air_lerp_speed * delta)
+		velocity.z = lerp(velocity.z, target_velocity.z + boost_velocity.z, air_lerp_speed * delta)
+
+
+func update_boost_velocity(delta: float) -> void:
+	boost_velocity.y = 0.0
+
+	if boost_velocity.length() > max_boost_speed:
+		boost_velocity = boost_velocity.normalized() * max_boost_speed
+
+	boost_velocity = boost_velocity.move_toward(Vector3.ZERO, boost_decay * delta)
+
+
+func add_boost(direction: Vector3, amount: float) -> void:
+	if direction == Vector3.ZERO:
+		return
+
+	boost_velocity += direction.normalized() * amount
+
+	if boost_velocity.length() > max_boost_speed:
+		boost_velocity = boost_velocity.normalized() * max_boost_speed
+
+
+func handle_dash_input() -> void:
+	if not Input.is_action_just_pressed("dash"):
+		return
+
+	if dash_cooldown_timer > 0.0:
+		return
+
+	var desired_direction := get_input_move_direction()
+
+	if desired_direction == Vector3.ZERO:
+		desired_direction = -transform.basis.z.normalized()
+
+	dash_direction = desired_direction
+	dash_timer = dash_duration
+	dash_cooldown_timer = dash_cooldown
+
+	add_boost(dash_direction, dash_boost)
+
+	if movement_state == MovementState.SLIDING:
+		cancel_slide()
+
+	set_movement_state(MovementState.DASHING)
+
+
+func handle_slide_input() -> void:
+	if slide_buffer_timer <= 0.0:
+		return
+
+	if not is_on_floor():
+		return
+
+	if movement_state == MovementState.DASHING:
+		return
+
+	var desired_direction := get_input_move_direction()
+
+	if desired_direction == Vector3.ZERO:
+		desired_direction = -transform.basis.z.normalized()
+
+	slide_direction = desired_direction
+	slide_timer = slide_duration
+	slide_buffer_timer = 0.0
+
+	add_boost(slide_direction, slide_boost)
+
+	set_slide_collider_active(true)
+	set_movement_state(MovementState.SLIDING)
+
+
+func handle_weapon_landing_kick() -> void:
+	if weapon_manager == null:
+		return
+
+	var landed_this_frame := is_on_floor() and not was_on_floor
+
+	if not landed_this_frame:
+		return
+
+	if previous_frame_velocity_y >= -1.0:
+		return
+
+	var impact_speed: float = abs(previous_frame_velocity_y)
+	weapon_manager.apply_landing_kick(impact_speed)
+
+
+func update_weapon_visual_movement() -> void:
+	if weapon_manager == null:
+		return
+
+	var horizontal_speed: float = Vector2(velocity.x, velocity.z).length()
+	var bob_speed_value: float = horizontal_speed
+	var should_play_walk_bob: bool = is_on_floor() and movement_state != MovementState.SLIDING
+
+	if not should_play_walk_bob:
+		bob_speed_value = 0.0
+
+	var input_dir: Vector2 = Input.get_vector(
+		"move_left",
+		"move_right",
+		"move_forward",
+		"move_backward"
+	)
+
+	var is_moving_forward_only: bool = input_dir.y < -0.5 and abs(input_dir.x) < 0.25
+
+	var should_use_tactical_sprint_pose := (
+		horizontal_speed >= move_speed - 0.25
+		and is_on_floor()
+		and movement_state != MovementState.SLIDING
+		and is_moving_forward_only
+	)
+
+	weapon_manager.set_player_movement_state(bob_speed_value, should_use_tactical_sprint_pose)
 
 
 func handle_mouse_look(event: InputEventMouseMotion) -> void:
@@ -307,8 +349,7 @@ func update_camera_juice(delta: float) -> void:
 		target_position.y += sin(bob_timer) * bob_amount
 	else:
 		bob_timer = 0.0
-
-	target_position.y += sin(breathing_timer * breathing_speed) * breathing_amount
+		target_position.y += sin(breathing_timer * breathing_speed) * breathing_amount
 
 	if movement_state == MovementState.SLIDING:
 		target_position.y -= slide_camera_dip
@@ -332,7 +373,6 @@ func update_camera_juice(delta: float) -> void:
 	)
 
 	head.rotation.x = look_pitch + camera_pitch_offset
-
 	head.rotation.z = lerp_angle(
 		head.rotation.z,
 		target_roll,
@@ -431,33 +471,6 @@ func is_wall_sliding() -> bool:
 	)
 
 
-func handle_movement() -> void:
-	var air_weight: float = clamp(air_lerp_speed * get_physics_process_delta_time(), 0.0, 1.0)
-
-	if movement_state == MovementState.DASHING:
-		velocity.x = dash_direction.x * dash_speed
-		velocity.z = dash_direction.z * dash_speed
-		velocity.y = 0.0
-		return
-
-	if movement_state == MovementState.SLIDING:
-		velocity.x = slide_direction.x * slide_speed
-		velocity.z = slide_direction.z * slide_speed
-		return
-
-	if wall_jump_lock_timer > 0.0:
-		return
-
-	var move_direction := get_input_move_direction()
-
-	if is_on_floor():
-		velocity.x = move_direction.x * move_speed
-		velocity.z = move_direction.z * move_speed
-	else:
-		velocity.x = lerp(velocity.x, move_direction.x * move_speed, air_weight)
-		velocity.z = lerp(velocity.z, move_direction.z * move_speed, air_weight)
-
-
 func handle_jump() -> void:
 	if jump_buffer_timer <= 0.0:
 		return
@@ -499,8 +512,7 @@ func perform_ground_jump() -> void:
 
 func perform_slide_jump() -> void:
 	velocity.y = jump_velocity
-	velocity.x = slide_direction.x * (move_speed + slide_jump_boost)
-	velocity.z = slide_direction.z * (move_speed + slide_jump_boost)
+	add_boost(slide_direction, slide_jump_boost)
 
 	jump_buffer_timer = 0.0
 	coyote_timer = 0.0
@@ -511,8 +523,7 @@ func perform_slide_jump() -> void:
 func perform_wall_jump() -> void:
 	var jump_direction := wall_normal.normalized()
 
-	velocity.x = jump_direction.x * wall_jump_horizontal_speed
-	velocity.z = jump_direction.z * wall_jump_horizontal_speed
+	add_boost(jump_direction, wall_jump_horizontal_speed)
 	velocity.y = wall_jump_vertical_speed
 
 	if perfect_wall_jump_timer <= 0.0:
@@ -520,55 +531,9 @@ func perform_wall_jump() -> void:
 
 	wall_jump_lock_timer = wall_jump_lock_time
 	perfect_wall_jump_timer = 0.0
-
 	jump_buffer_timer = 0.0
 	coyote_timer = 0.0
 	wall_normal = Vector3.ZERO
-
-
-func handle_dash_input() -> void:
-	if not Input.is_action_just_pressed("dash"):
-		return
-
-	if dash_cooldown_timer > 0.0:
-		return
-
-	var desired_direction := get_input_move_direction()
-
-	if desired_direction == Vector3.ZERO:
-		desired_direction = -transform.basis.z.normalized()
-
-	dash_direction = desired_direction
-	dash_timer = dash_duration
-	dash_cooldown_timer = dash_cooldown
-
-	if movement_state == MovementState.SLIDING:
-		cancel_slide()
-
-	set_movement_state(MovementState.DASHING)
-
-
-func handle_slide_input() -> void:
-	if slide_buffer_timer <= 0.0:
-		return
-
-	if not is_on_floor():
-		return
-
-	if movement_state == MovementState.DASHING:
-		return
-
-	var desired_direction := get_input_move_direction()
-
-	if desired_direction == Vector3.ZERO:
-		desired_direction = -transform.basis.z.normalized()
-
-	slide_direction = desired_direction
-	slide_timer = slide_duration
-	slide_buffer_timer = 0.0
-	set_slide_collider_active(true)
-
-	set_movement_state(MovementState.SLIDING)
 
 
 func cancel_slide() -> void:
@@ -599,6 +564,7 @@ func get_input_move_direction() -> Vector3:
 func stop_horizontal_movement() -> void:
 	velocity.x = 0.0
 	velocity.z = 0.0
+	boost_velocity = Vector3.ZERO
 
 
 func update_movement_state() -> void:
@@ -640,7 +606,6 @@ func set_movement_state(new_state: MovementState) -> void:
 
 	var old_state := movement_state
 	movement_state = new_state
-
 	movement_state_changed.emit(old_state, movement_state)
 
 
@@ -650,8 +615,8 @@ func set_control_mode(new_mode: ControlMode) -> void:
 
 	var old_mode := control_mode
 	control_mode = new_mode
-
 	control_mode_changed.emit(old_mode, control_mode)
+
 	refresh_debug_display()
 
 
@@ -703,8 +668,6 @@ func find_ray_target(node: Node) -> Node:
 	return null
 
 
-## Attempts to interact with whatever the player's interaction ray is currently hitting.
-## Used for pickups, buttons, terminals, doors, and future interactable objects.
 func try_interact() -> void:
 	print("")
 	print("========== PLAYER TRY INTERACT ==========")
@@ -759,14 +722,6 @@ func try_interact() -> void:
 	print("")
 
 
-## Searches from a raycast hit node upward until it finds a node with interact().
-## This matters because the ray may hit a child collider instead of the pickup root.
-##
-## start_node:
-## The node hit by the interaction ray.
-##
-## Returns:
-## The first node found that has an interact() method, or null if none is found.
 func find_interactable(start_node: Node) -> Node:
 	if start_node == null:
 		return null
@@ -784,11 +739,13 @@ func find_interactable(start_node: Node) -> Node:
 
 	return null
 
+
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
 
 	if not input_enabled:
 		velocity = Vector3.ZERO
+		boost_velocity = Vector3.ZERO
 
 
 func receive_item(item_data: ItemData) -> void:
@@ -831,6 +788,9 @@ func refresh_debug_display() -> void:
 	debug_label.text = (
 		"Control Mode: " + str(control_mode)
 		+ "\nMovement State: " + str(movement_state)
+		+ "\nVelocity: " + str(velocity)
+		+ "\nBoost Velocity: " + str(boost_velocity)
+		+ "\nHorizontal Speed: " + str(Vector2(velocity.x, velocity.z).length())
 		+ "\nWall Normal: " + str(wall_normal)
 		+ "\nWall Jumps: " + str(wall_jumps_remaining)
 		+ "\nPerfect Wall Timer: " + str(perfect_wall_jump_timer)

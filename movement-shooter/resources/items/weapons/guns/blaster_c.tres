@@ -9,6 +9,9 @@
 script = ExtResource("1_xess2")
 viewmodel_scene = ExtResource("2_84kt1")
 recoil_rotation_kick_degrees = Vector3(20, 1, 0)
+bob_position_amount = Vector3(0.018, 0.035, 0)
+bob_walk_speed = 6.0
+bob_sprint_speed = 8.0
 item_name = "Blaster C"
 description = "Generic blaster for testing"
 item_id = &"Blaster C"
